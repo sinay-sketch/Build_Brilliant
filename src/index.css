@@ -1,0 +1,212 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+ * Build Brilliant — "Field Notebook" design system
+ * Warm editorial light theme: cream paper, ink type, a single
+ * confident amber accent. Display serif (Fraunces) + Inter body.
+ * ------------------------------------------------------------------ */
+
+@theme {
+  /* Surfaces */
+  --color-paper: #f4efe4;
+  --color-paper-2: #ede6d6;
+  --color-surface: #fffefb;
+  --color-surface-2: #faf6ed;
+  --color-line: #e6ddca;
+  --color-line-strong: #d7cbb0;
+
+  /* Ink (text) — warm near-black */
+  --color-ink: #211c16;
+  --color-ink-soft: #6c6354;
+  --color-ink-mute: #9b9281;
+
+  /* Accent — amber / burnt orange */
+  --color-brand: #d9600c;
+  --color-brand-strong: #b94a08;
+  --color-brand-soft: #fbe6cf;
+  --color-brand-tint: #fdf3e7;
+
+  /* Semantic states (reserved strictly for correctness) */
+  --color-success: #1f8a4c;
+  --color-success-strong: #15703c;
+  --color-success-soft: #e3f3e8;
+  --color-danger: #c23728;
+  --color-danger-strong: #9f2a1e;
+  --color-danger-soft: #fae8e3;
+
+  /* Accents for stats */
+  --color-streak: #e2570c;
+  --color-gold: #b07d18;
+  --color-track: #e9e1cf;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(217, 96, 12, 0.06) 0%, transparent 60%),
+    radial-gradient(800px 520px at 100% 0%, rgba(176, 125, 24, 0.07) 0%, transparent 55%);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Prevent iOS double-tap zoom and make the app feel native */
+button {
+  touch-action: manipulation;
+}
+
+/* Editorial display headings */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* Thin small-caps eyebrow label */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Card surface used across the app */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 10px 30px -18px rgba(33, 28, 22, 0.35);
+}
+
+.btn-primary {
+  background-color: var(--color-brand);
+  color: #fff;
+  border-radius: 0.85rem;
+  font-weight: 600;
+  transition: transform 0.08s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 20px -10px rgba(217, 96, 12, 0.7);
+}
+.btn-primary:enabled:hover {
+  background-color: var(--color-brand-strong);
+}
+.btn-primary:active {
+  transform: scale(0.985);
+}
+.btn-primary:disabled {
+  background-color: var(--color-line-strong);
+  color: var(--color-ink-mute);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ---------- Range slider ---------- */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-track);
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgba(33, 28, 22, 0.28);
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgba(33, 28, 22, 0.28);
+  cursor: pointer;
+}
+
+/* ---------- Animations ---------- */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 0.2s ease-out;
+}
+
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-celebrate {
+  animation: celebrate 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
