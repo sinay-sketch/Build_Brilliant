@@ -34,7 +34,7 @@ export const positionVelocityLesson: Lesson = {
       phase: 'predict',
       concept: 'speed-vs-velocity',
       prompt:
-        'Two cars each read 60 km/h on the speedometer. One drives due north, the other due south. Do they have the same velocity?',
+        'Two cars each read 60 km/h on the speedometer. One drives due east, the other due west. Do they have the same velocity?',
       choices: [
         { id: 'yes', label: 'Yes — same number on the speedometer' },
         { id: 'no', label: 'No — they move in opposite directions' },
