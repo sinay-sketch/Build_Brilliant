@@ -32,6 +32,7 @@ export const projectileLesson: Lesson = {
       type: 'predict',
       phase: 'predict',
       concept: 'gravity-independence',
+      game: { kind: 'drop-race', config: { speed: 15 } },
       prompt:
         'You fire one ball straight sideways and drop another from the same height at the exact same instant. Which one hits the ground first?',
       choices: [
@@ -177,6 +178,7 @@ export const projectileLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'components',
+      game: { kind: 'vector-components', config: { angleDeg: 30, speed: 20 } },
       prompt: 'Launch speed v = 20 m/s at θ = 30°. What is the sideways speed v_x? (v_x = v·cos θ)',
       answer: 17.3,
       unit: 'm/s',
@@ -193,6 +195,7 @@ export const projectileLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'components',
+      game: { kind: 'vector-components', config: { angleDeg: 30, speed: 20 } },
       prompt: 'Same launch: v = 20 m/s at θ = 30°. What is the starting upward speed v_y? (v_y = v·sin θ)',
       answer: 10,
       unit: 'm/s',
@@ -229,6 +232,7 @@ export const projectileLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'trajectory-shape',
+      game: { kind: 'parabola-tracer', config: { angleDeg: 30, speed: 20 } },
       prompt: 'With v_y = 10 m/s and g = 9.8, how many seconds does the ball stay in the air? (t = 2·v_y / g)',
       answer: 2.04,
       unit: 's',
@@ -332,6 +336,7 @@ export const projectileLesson: Lesson = {
       type: 'predict',
       phase: 'build',
       concept: 'complementary-angles',
+      game: { kind: 'complementary-pair', config: { angleDeg: 30, speed: 22 } },
       prompt:
         'From R = v²·sin(2θ)/g: you hit 40 m using a 30° launch. Keeping the same speed, which OTHER angle also lands at about 40 m?',
       choices: [
@@ -357,6 +362,7 @@ export const projectileLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'range-reasoning',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 25 } },
       prompt: 'Use R = v²·sin(2θ)/g. For v = 25 m/s, θ = 45°, g = 9.8, what is the range R?',
       answer: 63.8,
       unit: 'm',
@@ -383,6 +389,7 @@ export const projectileLesson: Lesson = {
       explanation: 'R = v²·sin(2θ)/g = 400 · sin60° / 9.8 = 400 · 0.866 / 9.8 ≈ 35.3 m.',
       solution: ['2θ = 60°, sin60° ≈ 0.866.', 'R = 400 · 0.866 / 9.8.', '= 346.4 / 9.8.', '≈ 35.3 m.'],
       takeaway: 'The full formula handles any angle, not just 45°.',
+      visual: { angleDeg: 30, speed: 20, gravity: 9.8, editable: ['angle', 'speed'] },
     },
     {
       id: 'predict-landing',
@@ -450,6 +457,7 @@ export const projectileLesson: Lesson = {
       type: 'recall',
       phase: 'master',
       concept: 'gravity-independence',
+      game: { kind: 'drop-race', config: { speed: 12 } },
       prompt:
         'From memory, no simulator: a ball rolls off a table while another is dropped from the same height at the same moment. Which hits the floor first?',
       choices: [
@@ -467,6 +475,7 @@ export const projectileLesson: Lesson = {
       type: 'mcq',
       phase: 'master',
       concept: 'complementary-angles',
+      game: { kind: 'complementary-pair', config: { angleDeg: 25, speed: 20 } },
       prompt:
         'A player kicks a ball at 25° and it lands 30 m away. With the exact same speed, which angle would also land it about 30 m away?',
       choices: [

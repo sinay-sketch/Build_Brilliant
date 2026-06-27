@@ -34,6 +34,7 @@ export const freeFallLesson: Lesson = {
       type: 'predict',
       phase: 'predict',
       concept: 'free-fall-rate',
+      game: { kind: 'feather-hammer' },
       prompt:
         'You drop a heavy bowling ball and a light marble from the same height at the same moment (no air resistance). Which lands first?',
       choices: [
@@ -72,6 +73,7 @@ export const freeFallLesson: Lesson = {
       type: 'predict',
       phase: 'explore',
       concept: 'gravity-accel',
+      game: { kind: 'stroboscope', config: { height: 45 } },
       prompt: 'From watching the drop, what happens to the ball’s speed as it falls?',
       choices: [
         { id: 'const', label: 'It stays the same the whole way down' },
@@ -124,6 +126,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'gravity-accel',
+      game: { kind: 'drop-tower', config: { height: 50 } },
       prompt: 'You drop a rock from rest. How fast is it falling after 3 seconds? (v = g·t)',
       answer: 29.4,
       unit: 'm/s',
@@ -140,6 +143,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'gravity-accel',
+      game: { kind: 'stroboscope', config: { height: 15 } },
       prompt: 'Starting from rest, how fast is an object falling after 1.5 seconds?',
       answer: 14.7,
       unit: 'm/s',
@@ -156,6 +160,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'gravity-accel',
+      game: { kind: 'drop-tower', config: { height: 125 } },
       prompt: 'Rearrange v = g·t. How long does it take a dropped object to reach 49 m/s? (t = v / g)',
       answer: 5,
       unit: 's',
@@ -191,6 +196,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'fall-distance',
+      game: { kind: 'stroboscope', config: { height: 25 } },
       prompt: 'A ball falls from rest for 2 seconds. How far does it drop? (d = ½·g·t²)',
       answer: 19.6,
       unit: 'm',
@@ -207,6 +213,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'fall-distance',
+      game: { kind: 'drop-tower', config: { height: 45 } },
       prompt: 'How far does the same ball fall in 3 seconds?',
       answer: 44.1,
       unit: 'm',
@@ -248,6 +255,7 @@ export const freeFallLesson: Lesson = {
       type: 'mcq',
       phase: 'build',
       concept: 'fall-distance',
+      game: { kind: 'stroboscope', config: { height: 40 } },
       prompt: 'If you double the falling time, the distance fallen becomes...',
       choices: [
         { id: '2x', label: 'Twice as much' },
@@ -282,6 +290,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'fall-distance',
+      game: { kind: 'drop-tower', config: { height: 44.1 } },
       prompt: 'A ball is dropped from a 44.1 m cliff. How long until it hits the ground? (t = √(2d/g))',
       answer: 3,
       unit: 's',
@@ -312,6 +321,7 @@ export const freeFallLesson: Lesson = {
       type: 'mcq',
       phase: 'build',
       concept: 'free-fall-rate',
+      game: { kind: 'feather-hammer' },
       prompt: 'On the Moon, an astronaut drops a hammer and a feather together. What happens?',
       choices: [
         { id: 'hammer', label: 'The hammer lands well before the feather' },
@@ -333,6 +343,7 @@ export const freeFallLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'gravity-accel',
+      game: { kind: 'drop-tower', config: { height: 25 } },
       prompt: 'On the Moon, gravity is g = 1.62 m/s². How fast is a dropped tool moving after 5 seconds?',
       answer: 8.1,
       unit: 'm/s',
@@ -368,6 +379,7 @@ export const freeFallLesson: Lesson = {
       type: 'recall',
       phase: 'master',
       concept: 'free-fall-rate',
+      game: { kind: 'feather-hammer' },
       prompt: 'From memory: two objects of very different mass are dropped together in a vacuum. Which reaches the ground first?',
       choices: [
         { id: 'heavy', label: 'The heavier one' },
@@ -383,6 +395,7 @@ export const freeFallLesson: Lesson = {
       type: 'recall',
       phase: 'master',
       concept: 'gravity-accel',
+      game: { kind: 'drop-tower', config: { height: 50 } },
       prompt: 'From memory: which formula gives the speed of a dropped object after time t?',
       choices: [
         { id: 'gt', label: 'v = g · t' },
@@ -398,6 +411,7 @@ export const freeFallLesson: Lesson = {
       type: 'mcq',
       phase: 'master',
       concept: 'fall-distance',
+      game: { kind: 'stroboscope', config: { height: 40 } },
       prompt:
         'Two stones are dropped: stone B falls for twice as long as stone A before landing. How do their fall distances compare?',
       choices: [

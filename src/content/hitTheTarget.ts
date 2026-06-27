@@ -48,6 +48,7 @@ export const hitTheTargetLesson: Lesson = {
       explanation:
         'Range peaks at 45° for a fixed speed. If the target sits near your maximum reach, 45° is the only angle that can get there.',
       takeaway: 'At the edge of your range, 45° is the answer.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 20 } },
     },
 
     // ---------------- EXPLORE ----------------
@@ -84,6 +85,7 @@ export const hitTheTargetLesson: Lesson = {
       },
       explanation: 'Complementary angles (summing to 90°) give equal range. 35° pairs with 55°.',
       takeaway: 'The complement 90° − θ always hits the same spot.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 35, speed: 18 } },
     },
 
     // ---------------- BUILD / PRACTICE: first aim ----------------
@@ -142,6 +144,13 @@ export const hitTheTargetLesson: Lesson = {
       explanation: 'R = 484 · sin80° / 9.8 = 484 · 0.985 / 9.8 ≈ 48.6 m.',
       solution: ['2θ = 80°, sin80° ≈ 0.985.', 'R = 484 · 0.985 / 9.8.', '= 476.6 / 9.8.', '≈ 48.6 m.'],
       takeaway: 'Plug into the range formula to predict where it lands.',
+      visual: {
+        angleDeg: 40,
+        speed: 22,
+        gravity: 9.8,
+        editable: [],
+        target: { distance: 48.6, radius: 2.5 },
+      },
     },
     {
       id: 'ht-dial-speed',
@@ -225,6 +234,7 @@ export const hitTheTargetLesson: Lesson = {
       explanation: 'v_y = 24·sin50° ≈ 18.4 m/s, so t = 2·18.4/9.8 ≈ 3.75 s.',
       solution: ['v_y = 24 · 0.766 ≈ 18.4 m/s.', 't = 2·v_y/g = 36.8 / 9.8.', '≈ 3.75 s.'],
       takeaway: 'Time aloft comes only from the upward part v_y.',
+      game: { kind: 'parabola-tracer', config: { angleDeg: 50, speed: 24 } },
     },
     {
       id: 'ht-vx-numeric',
@@ -241,6 +251,7 @@ export const hitTheTargetLesson: Lesson = {
       explanation: 'v_x = 25·cos37° ≈ 25·0.799 ≈ 20 m/s. This stays constant for the whole flight.',
       solution: ['v_x = v·cosθ = 25 · 0.799.', '≈ 20 m/s.'],
       takeaway: 'Sideways speed is constant — it carries the ball downrange.',
+      game: { kind: 'vector-components', config: { angleDeg: 37, speed: 25 } },
     },
 
     // ---------------- obstacle ----------------
@@ -283,6 +294,7 @@ export const hitTheTargetLesson: Lesson = {
       correctId: 'v2g',
       explanation: 'At 45°, sin(2θ) = sin90° = 1, so R = v²·1/g = v²/g.',
       takeaway: 'At 45°, R = v²/g.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 22 } },
     },
     {
       id: 'ht-recall-2',
@@ -298,6 +310,7 @@ export const hitTheTargetLesson: Lesson = {
       correctId: '65',
       explanation: '25° and 65° are complementary (sum to 90°), so they share the same range.',
       takeaway: 'Complement of θ = 90° − θ shares the range.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 25, speed: 21 } },
     },
     {
       id: 'ht-synthesis',
@@ -320,6 +333,7 @@ export const hitTheTargetLesson: Lesson = {
       explanation:
         'For any distance below maximum, two complementary angles hit it. At the maximum range itself, those two solutions merge into the single 45° launch.',
       takeaway: 'At maximum range there is exactly one angle: 45°.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 26 } },
     },
   ],
 }

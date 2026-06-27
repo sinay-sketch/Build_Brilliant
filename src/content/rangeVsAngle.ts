@@ -49,7 +49,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation:
         'Neither extreme wins here: 20° and 70° are complementary (they sum to 90°), so they produce the same range. One is fast and flat, the other slow and high.',
       takeaway: 'Angles that sum to 90° land at the same distance.',
-      visual: { angleDeg: 20, speed: 22, gravity: 9.8, editable: ['angle'] },
+      game: { kind: 'complementary-pair', config: { angleDeg: 20, speed: 22 } },
     },
 
     // ---------------- EXPLORE ----------------
@@ -101,7 +101,7 @@ export const rangeVsAngleLesson: Lesson = {
       },
       explanation: 'The range curve peaks at 45°, then falls. Above 45°, more height comes at the cost of forward speed.',
       takeaway: 'Past 45°, steeper means shorter.',
-      visual: { angleDeg: 45, speed: 22, gravity: 9.8, editable: ['angle'] },
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 22 } },
     },
 
     // ---------------- BUILD ----------------
@@ -138,6 +138,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation: 'R = v²·sin90°/g = 400 × 1 / 9.8 ≈ 40.8 m.',
       solution: ['2θ = 90°, sin90° = 1.', 'R = v²/g = 20² / 9.8.', '= 400 / 9.8.', '≈ 40.8 m.'],
       takeaway: 'At 45°, range is simply v²/g.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 20 } },
     },
     {
       id: 'rva-range-numeric-2',
@@ -154,6 +155,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation: 'R = v²·sin(2θ)/g = 576 × 0.866 / 9.8 ≈ 50.9 m.',
       solution: ['2θ = 60°, sin60° ≈ 0.866.', 'R = 576 × 0.866 / 9.8.', '= 498.8 / 9.8.', '≈ 50.9 m.'],
       takeaway: 'The full formula handles any angle, not just 45°.',
+      game: { kind: 'range-curve', config: { angleDeg: 30, speed: 24 } },
     },
     {
       id: 'rva-double-speed',
@@ -174,6 +176,7 @@ export const rangeVsAngleLesson: Lesson = {
       },
       explanation: 'R = v²·sin(2θ)/g, so range is proportional to v². Doubling the speed quadruples the range.',
       takeaway: 'Range grows with the square of speed.',
+      visual: { angleDeg: 45, speed: 15, gravity: 9.8, editable: ['speed'] },
     },
 
     // ---------------- complementary angles ----------------
@@ -198,7 +201,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation:
         'Complementary angles (summing to 90°) give sin(2θ) the same value, so they share a range. 25° pairs with 65°: one flat and fast, one high and slow.',
       takeaway: 'Find the complement (90° − θ) for a second angle with the same range.',
-      visual: { angleDeg: 25, speed: 20, gravity: 9.8, editable: ['angle'] },
+      game: { kind: 'complementary-pair', config: { angleDeg: 25, speed: 20 } },
     },
     {
       id: 'rva-complementary-numeric',
@@ -217,6 +220,7 @@ export const rangeVsAngleLesson: Lesson = {
         'R = 400 × sin120° / 9.8 = 400 × 0.866 / 9.8 ≈ 35.3 m — identical to a 30° launch, because 30° and 60° are complementary.',
       solution: ['2θ = 120°, sin120° ≈ 0.866.', 'R = 400 × 0.866 / 9.8.', '≈ 35.3 m (same as 30°).'],
       takeaway: '30° and 60° give the same range — proven by the numbers.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 60, speed: 20 } },
     },
     {
       id: 'rva-two-paths',
@@ -271,6 +275,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation: 'At 45°, R = v²/g, so v = √(R·g) = √(50·9.8) = √490 ≈ 22.1 m/s.',
       solution: ['At 45°, R = v²/g.', 'v = √(R·g) = √(50 × 9.8).', '= √490.', '≈ 22.1 m/s.'],
       takeaway: 'Rearrange the range formula to find a needed speed.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 22 } },
     },
     {
       id: 'rva-tap-landing',
@@ -322,6 +327,7 @@ export const rangeVsAngleLesson: Lesson = {
       },
       explanation: '30° and 60° are complementary (sum to 90°), so they land at the same distance for the same speed.',
       takeaway: 'Every target below max range has two angles: θ and 90° − θ.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 30, speed: 24 } },
     },
 
     // ---------------- MASTER ----------------
@@ -340,6 +346,7 @@ export const rangeVsAngleLesson: Lesson = {
       correctId: '50',
       explanation: '50°. Complementary angles sum to 90°, and 40° + 50° = 90°, so the two ranges match.',
       takeaway: 'The complement of θ always shares its range.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 40, speed: 17 } },
     },
     {
       id: 'rva-recall-2',
@@ -355,6 +362,7 @@ export const rangeVsAngleLesson: Lesson = {
       correctId: '45',
       explanation: 'Range is R = v²·sin(2θ)/g, largest when sin(2θ) = 1, i.e. 2θ = 90°, so θ = 45°.',
       takeaway: '45° is the maximum-range angle.',
+      game: { kind: 'range-curve', config: { angleDeg: 45, speed: 22 } },
     },
     {
       id: 'rva-synthesis',
@@ -377,6 +385,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation:
         '35° and 55° are complementary, so their ranges are equal. But the steeper 55° launch has more upward speed, so it reaches a greater peak height.',
       takeaway: 'Complementary angles tie on range, not on height.',
+      game: { kind: 'complementary-pair', config: { angleDeg: 35, speed: 22 } },
     },
   ],
 }

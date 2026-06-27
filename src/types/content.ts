@@ -61,12 +61,46 @@ export interface SimConfig {
   ghost?: { angleDeg: number; speed: number }
 }
 
+/**
+ * The exploratory (ungraded) visualization a question embeds so the learner has
+ * a relevant model to think with. Authored per question for maximum relevance.
+ * (Projectile cannon visuals can also use the richer `visual?: SimConfig`.)
+ */
+export type GameKind =
+  | 'motion-graph'
+  | 'track-trip'
+  | 'two-runners'
+  | 'round-trip'
+  | 'drop-tower'
+  | 'drop-race'
+  | 'stroboscope'
+  | 'feather-hammer'
+  | 'vector-components'
+  | 'parabola-tracer'
+  | 'range-curve'
+  | 'complementary-pair'
+
+export interface GameSpec {
+  kind: GameKind
+  /** Starting values; ideally mirror the numbers in the question prompt. */
+  config?: {
+    velocity?: number
+    v1?: number
+    v2?: number
+    speed?: number
+    height?: number
+    angleDeg?: number
+  }
+}
+
 interface StepBase {
   id: string
   /** Concept this step builds mastery toward (omitted for pure concept cards). */
   concept?: ConceptId
   /** Which part of the teaching arc this step belongs to. */
   phase?: StepPhase
+  /** A relevant interactive visualization for this specific question. */
+  game?: GameSpec
 }
 
 /** A concept/intro card. No teaching of procedure before the learner tries. */

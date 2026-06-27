@@ -205,8 +205,41 @@ function hashId(s: string): number {
  * by hashing the step id. If the step authored its own projectile sim, we honor
  * that instead.
  */
+/** Render the specific game a question authored for itself. */
+function renderGame(g: NonNullable<Step['game']>): React.ReactNode {
+  const c = g.config ?? {}
+  switch (g.kind) {
+    case 'motion-graph':
+      return <MotionGraph velocity={c.velocity} />
+    case 'track-trip':
+      return <TrackTrip velocity={c.velocity} />
+    case 'two-runners':
+      return <TwoRunners v1={c.v1} v2={c.v2} />
+    case 'round-trip':
+      return <RoundTrip speed={c.speed} />
+    case 'drop-tower':
+      return <DropTower height={c.height} />
+    case 'drop-race':
+      return <DropRace speed={c.speed} />
+    case 'stroboscope':
+      return <Stroboscope height={c.height} />
+    case 'feather-hammer':
+      return <FeatherHammer />
+    case 'vector-components':
+      return <VectorComponents angleDeg={c.angleDeg} speed={c.speed} />
+    case 'parabola-tracer':
+      return <ParabolaTracer angleDeg={c.angleDeg} speed={c.speed} />
+    case 'range-curve':
+      return <RangeAngleCurve angleDeg={c.angleDeg} speed={c.speed} />
+    case 'complementary-pair':
+      return <ComplementaryPair angleDeg={c.angleDeg} speed={c.speed} />
+  }
+}
+
 function QuestionVisual({ step }: { step: Step }) {
+  // A question's own authored cannon sim or game always wins (most relevant).
   if ('visual' in step && step.visual) return <SimPlayground config={step.visual} />
+  if (step.game) return renderGame(step.game)
 
   const seed = hashId(step.id)
   // Factory thunks so only the chosen widget is ever constructed.
