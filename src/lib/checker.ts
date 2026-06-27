@@ -88,6 +88,86 @@ export function checkTapLanding(
   return { correct, message, actual }
 }
 
+export function checkPlotPosition(
+  step: Extract<Step, { type: 'plot-position' }>,
+  pos: number,
+): CheckResult {
+  const target = step.velocity * step.time
+  const off = pos - target
+  const correct = Math.abs(off) <= step.tolerance
+  const message = correct
+    ? `Spot on — at ${step.velocity} m/s for ${step.time} s, it reaches ${target} m.`
+    : off < 0
+      ? `Not far enough. ${step.velocity} m/s for ${step.time} s covers more than ${Math.round(pos)} m.`
+      : `Too far. ${step.velocity} m/s for ${step.time} s covers less than ${Math.round(pos)} m.`
+  return { correct, message }
+}
+
+export function checkStopFall(
+  step: Extract<Step, { type: 'stop-fall' }>,
+  distance: number,
+): CheckResult {
+  const off = distance - step.targetDistance
+  const correct = Math.abs(off) <= step.tolerance
+  const message = correct
+    ? `Great timing — you stopped it at ${distance.toFixed(1)} m, right at the ${step.targetDistance} m mark.`
+    : off < 0
+      ? `Stopped early at ${distance.toFixed(1)} m — let it fall a bit longer next time.`
+      : `Stopped late at ${distance.toFixed(1)} m — it falls faster the longer it drops, so hit Stop sooner.`
+  return { correct, message }
+}
+
+export function checkCurveAim(
+  step: Extract<Step, { type: 'curve-aim' }>,
+  angleDeg: number,
+): CheckResult & { range: number } {
+  const range = computeKinematics(angleDeg, step.speed, step.gravity ?? 9.8).range
+  const off = range - step.targetRange
+  const correct = Math.abs(off) <= step.tolerance
+  const message = correct
+    ? `On target — ${Math.round(angleDeg)}° gives a range of ${range.toFixed(1)} m.`
+    : off < 0
+      ? `Range is ${range.toFixed(1)} m, short of ${step.targetRange} m. Move the angle toward 45°.`
+      : `Range is ${range.toFixed(1)} m, past ${step.targetRange} m. Move the angle away from 45°.`
+  return { correct, message, range }
+}
+
+export function checkGraphTarget(
+  step: Extract<Step, { type: 'graph-target' }>,
+  velocity: number,
+): CheckResult {
+  const target = step.target.x / step.target.t
+  const off = velocity - target
+  const correct = Math.abs(off) <= step.tolerance
+  const message = correct
+    ? `The line lands right on (${step.target.t}s, ${step.target.x}m). Slope = ${velocity.toFixed(0)} m/s.`
+    : off < 0
+      ? `The line falls short of the point — steepen it (raise the velocity above ${velocity.toFixed(0)} m/s).`
+      : `The line overshoots the point — ease the velocity below ${velocity.toFixed(0)} m/s.`
+  return { correct, message }
+}
+
+/** Fall time for a chosen drop height: t = sqrt(2h/g). */
+export function dropFallTime(height: number, gravity = 9.8): number {
+  return Math.sqrt((2 * Math.max(0, height)) / gravity)
+}
+
+export function checkDropTarget(
+  step: Extract<Step, { type: 'drop-target' }>,
+  height: number,
+): CheckResult & { time: number } {
+  const g = step.gravity ?? 9.8
+  const time = dropFallTime(height, g)
+  const off = time - step.targetTime
+  const correct = Math.abs(off) <= step.tolerance
+  const message = correct
+    ? `A ${height.toFixed(0)} m drop falls for ${time.toFixed(2)} s — right on target.`
+    : off < 0
+      ? `Falls for only ${time.toFixed(2)} s — too quick. Raise the height to lengthen the fall.`
+      : `Falls for ${time.toFixed(2)} s — too long. Lower the height to shorten the fall.`
+  return { correct, message, time }
+}
+
 export function checkSliderEstimate(
   step: Extract<Step, { type: 'slider-estimate' }>,
   value: number,

@@ -1,27 +1,43 @@
 import { useCallback, useRef, useState } from 'react'
-import type { ConceptId, Formula, Step } from '../types/content'
+import type { ConceptId, Formula, Lesson, Step } from '../types/content'
 import {
   checkChoiceAnswer,
+  checkCurveAim,
+  checkDropTarget,
+  checkGraphTarget,
   checkNumericAnswer,
+  checkPlotPosition,
   checkSimChallenge,
   checkSliderEstimate,
+  checkStopFall,
   checkTapLanding,
 } from '../lib/checker'
 import SimPlayground from './SimPlayground'
 import VectorComponents from './VectorComponents'
 import DropRace from './DropRace'
+import MotionGraph from './MotionGraph'
+import DropTower from './DropTower'
+import RangeAngleCurve from './RangeAngleCurve'
+import GraphTarget from './GraphTarget'
+import DropTarget from './DropTarget'
+import NumberLinePlot from './NumberLinePlot'
+import StopFall from './StopFall'
+import RangeAim from './RangeAim'
 import TapLanding from './TapLanding'
 import Feedback from './Feedback'
+import AiTutor from './AiTutor'
 import Sci, { renderSci } from './Sci'
 
 interface Props {
   step: Step
+  lesson: Lesson
+  masteryScore?: number
   onSolved: (correct: boolean, answer: string | number | null, concept?: ConceptId) => void
   onContinue: () => void
   isLast: boolean
 }
 
-export default function StepView({ step, onSolved, onContinue, isLast }: Props) {
+export default function StepView({ step, lesson, masteryScore, onSolved, onContinue, isLast }: Props) {
   const continueLabel = isLast ? 'Finish lesson' : 'Continue'
 
   switch (step.type) {
@@ -58,6 +74,11 @@ export default function StepView({ step, onSolved, onContinue, isLast }: Props) 
             <VectorComponents angleDeg={step.config?.angleDeg} speed={step.config?.speed} />
           )}
           {step.widget === 'drop-race' && <DropRace speed={step.config?.speed} />}
+          {step.widget === 'motion-graph' && <MotionGraph velocity={step.config?.velocity} />}
+          {step.widget === 'drop-tower' && <DropTower height={step.config?.height} />}
+          {step.widget === 'range-curve' && (
+            <RangeAngleCurve angleDeg={step.config?.angleDeg} speed={step.config?.speed} />
+          )}
           {step.keyPoints && step.keyPoints.length > 0 && (
             <ul className="space-y-2 rounded-xl border border-line bg-surface-2 p-4">
               {step.keyPoints.map((pt) => (
@@ -74,20 +95,40 @@ export default function StepView({ step, onSolved, onContinue, isLast }: Props) 
     case 'predict':
     case 'mcq':
     case 'recall':
-      return <ChoiceStep step={step} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      return <ChoiceStep step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
     case 'numeric':
-      return <NumericStepView step={step} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      return <NumericStepView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
     case 'sim-challenge':
       return (
-        <SimChallengeView step={step} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+        <SimChallengeView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
       )
     case 'tap-landing':
       return (
-        <TapLandingView step={step} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+        <TapLandingView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
       )
     case 'slider-estimate':
       return (
-        <SliderEstimateView step={step} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+        <SliderEstimateView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      )
+    case 'graph-target':
+      return (
+        <GraphTargetView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      )
+    case 'drop-target':
+      return (
+        <DropTargetView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      )
+    case 'plot-position':
+      return (
+        <PlotPositionView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      )
+    case 'stop-fall':
+      return (
+        <StopFallView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      )
+    case 'curve-aim':
+      return (
+        <CurveAimView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
       )
     default:
       return null
@@ -146,17 +187,22 @@ type ChoiceStepType = Extract<Step, { type: 'predict' | 'mcq' | 'recall' }>
 
 function ChoiceStep({
   step,
+  lesson,
+  masteryScore,
   onSolved,
   onContinue,
   continueLabel,
 }: {
   step: ChoiceStepType
+  lesson: Lesson
+  masteryScore?: number
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
 }) {
   const [selected, setSelected] = useState<string | null>(null)
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
   const solved = result?.correct ?? false
   const hasVisual = step.type !== 'recall' && step.visual
 
@@ -164,6 +210,7 @@ function ChoiceStep({
     if (!selected) return
     const r = checkChoiceAnswer(step, selected)
     setResult(r)
+    setAttempts((a) => a + 1)
     onSolved(r.correct, selected, step.concept)
   }
 
@@ -215,6 +262,15 @@ function ChoiceStep({
         />
       )}
 
+      <AiTutor
+        lesson={lesson}
+        step={step}
+        attempts={attempts}
+        lastAnswer={selected}
+        solved={solved}
+        masteryScore={masteryScore}
+      />
+
       {solved ? (
         <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
       ) : (
@@ -228,11 +284,15 @@ function ChoiceStep({
 
 function NumericStepView({
   step,
+  lesson,
+  masteryScore,
   onSolved,
   onContinue,
   continueLabel,
 }: {
   step: Extract<Step, { type: 'numeric' }>
+  lesson: Lesson
+  masteryScore?: number
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
@@ -240,6 +300,8 @@ function NumericStepView({
   const [value, setValue] = useState('')
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
   const [hintIndex, setHintIndex] = useState(0)
+  const [attempts, setAttempts] = useState(0)
+  const [lastNum, setLastNum] = useState<number | null>(null)
   const solved = result?.correct ?? false
 
   const check = () => {
@@ -253,6 +315,8 @@ function NumericStepView({
       setResult({ correct: false, message: `Not quite. ${hint}` })
       setHintIndex((i) => Math.min(i + 1, step.hints.length))
     }
+    setAttempts((a) => a + 1)
+    setLastNum(num)
     onSolved(correct, num, step.concept)
   }
 
@@ -285,6 +349,15 @@ function NumericStepView({
         />
       )}
 
+      <AiTutor
+        lesson={lesson}
+        step={step}
+        attempts={attempts}
+        lastAnswer={lastNum}
+        solved={solved}
+        masteryScore={masteryScore}
+      />
+
       {solved && step.solution && step.solution.length > 0 && (
         <div className="rounded-xl border border-line bg-surface-2 p-4">
           <p className="eyebrow mb-2 text-ink-mute">Worked solution</p>
@@ -312,11 +385,15 @@ function NumericStepView({
 
 function SimChallengeView({
   step,
+  lesson,
+  masteryScore,
   onSolved,
   onContinue,
   continueLabel,
 }: {
   step: Extract<Step, { type: 'sim-challenge' }>
+  lesson: Lesson
+  masteryScore?: number
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
@@ -324,6 +401,7 @@ function SimChallengeView({
   const live = useRef({ angle: step.sim.angleDeg, speed: step.sim.speed })
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
   const [attempts, setAttempts] = useState(0)
+  const [lastShot, setLastShot] = useState<string | null>(null)
   const solved = result?.correct ?? false
 
   const onState = useCallback((angle: number, speed: number) => {
@@ -334,7 +412,9 @@ function SimChallengeView({
     const r = checkSimChallenge(step, live.current.angle, live.current.speed)
     setResult({ correct: r.correct, message: r.message })
     setAttempts((a) => a + 1)
-    onSolved(r.correct, `${Math.round(live.current.angle)}deg/${Math.round(live.current.speed)}`, step.concept)
+    const shot = `${Math.round(live.current.angle)}deg/${Math.round(live.current.speed)}`
+    setLastShot(shot)
+    onSolved(r.correct, shot, step.concept)
   }
 
   const hint = !solved && attempts > 0 ? step.hints[Math.min(attempts - 1, step.hints.length - 1)] : null
@@ -359,6 +439,15 @@ function SimChallengeView({
         </div>
       )}
 
+      <AiTutor
+        lesson={lesson}
+        step={step}
+        attempts={attempts}
+        lastAnswer={lastShot}
+        solved={solved}
+        masteryScore={masteryScore}
+      />
+
       {solved ? (
         <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
       ) : (
@@ -370,17 +459,23 @@ function SimChallengeView({
 
 function TapLandingView({
   step,
+  lesson,
+  masteryScore,
   onSolved,
   onContinue,
   continueLabel,
 }: {
   step: Extract<Step, { type: 'tap-landing' }>
+  lesson: Lesson
+  masteryScore?: number
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
 }) {
   const guess = useRef(0)
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastGuess, setLastGuess] = useState<number | null>(null)
   const revealed = result !== null
 
   const onGuessChange = useCallback((m: number) => {
@@ -390,6 +485,8 @@ function TapLandingView({
   const check = () => {
     const r = checkTapLanding(step, guess.current)
     setResult({ correct: r.correct, message: r.message })
+    setAttempts((a) => a + 1)
+    setLastGuess(Math.round(guess.current))
     onSolved(r.correct, Math.round(guess.current), step.concept)
   }
 
@@ -415,6 +512,15 @@ function TapLandingView({
         </>
       )}
 
+      <AiTutor
+        lesson={lesson}
+        step={step}
+        attempts={attempts}
+        lastAnswer={lastGuess}
+        solved={revealed}
+        masteryScore={masteryScore}
+      />
+
       {revealed ? (
         <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
       ) : (
@@ -426,11 +532,15 @@ function TapLandingView({
 
 function SliderEstimateView({
   step,
+  lesson,
+  masteryScore,
   onSolved,
   onContinue,
   continueLabel,
 }: {
   step: Extract<Step, { type: 'slider-estimate' }>
+  lesson: Lesson
+  masteryScore?: number
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
@@ -438,6 +548,7 @@ function SliderEstimateView({
   const live = useRef({ angle: step.sim.angleDeg, speed: step.sim.speed })
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
   const [attempts, setAttempts] = useState(0)
+  const [lastVal, setLastVal] = useState<number | null>(null)
   const solved = result?.correct ?? false
 
   const onState = useCallback((angle: number, speed: number) => {
@@ -449,6 +560,7 @@ function SliderEstimateView({
     const r = checkSliderEstimate(step, value)
     setResult(r)
     setAttempts((a) => a + 1)
+    setLastVal(Math.round(value))
     onSolved(r.correct, Math.round(value), step.concept)
   }
 
@@ -472,10 +584,305 @@ function SliderEstimateView({
         </div>
       )}
 
+      <AiTutor
+        lesson={lesson}
+        step={step}
+        attempts={attempts}
+        lastAnswer={lastVal}
+        solved={solved}
+        masteryScore={masteryScore}
+      />
+
       {solved ? (
         <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
       ) : (
         <PrimaryButton onClick={check}>Check</PrimaryButton>
+      )}
+    </div>
+  )
+}
+
+function GraphTargetView({
+  step,
+  lesson,
+  masteryScore,
+  onSolved,
+  onContinue,
+  continueLabel,
+}: {
+  step: Extract<Step, { type: 'graph-target' }>
+  lesson: Lesson
+  masteryScore?: number
+  onSolved: Props['onSolved']
+  onContinue: () => void
+  continueLabel: string
+}) {
+  const live = useRef(0)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastV, setLastV] = useState<number | null>(null)
+  const solved = result?.correct ?? false
+
+  const onValue = useCallback((v: number) => {
+    live.current = v
+  }, [])
+
+  const check = () => {
+    const r = checkGraphTarget(step, live.current)
+    setResult(r)
+    setAttempts((a) => a + 1)
+    setLastV(Math.round(live.current))
+    onSolved(r.correct, Math.round(live.current), step.concept)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
+      <GraphTarget
+        target={step.target}
+        startV={step.startV}
+        onValue={onValue}
+        revealed={result !== null}
+        correct={result?.correct}
+      />
+
+      {result && (
+        <Feedback correct={result.correct} message={result.message} explanation={step.explanation} takeaway={step.takeaway} />
+      )}
+
+      <AiTutor lesson={lesson} step={step} attempts={attempts} lastAnswer={lastV} solved={solved} masteryScore={masteryScore} />
+
+      {solved ? (
+        <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
+      ) : (
+        <PrimaryButton onClick={check}>Check the line</PrimaryButton>
+      )}
+    </div>
+  )
+}
+
+function DropTargetView({
+  step,
+  lesson,
+  masteryScore,
+  onSolved,
+  onContinue,
+  continueLabel,
+}: {
+  step: Extract<Step, { type: 'drop-target' }>
+  lesson: Lesson
+  masteryScore?: number
+  onSolved: Props['onSolved']
+  onContinue: () => void
+  continueLabel: string
+}) {
+  const live = useRef(20)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastH, setLastH] = useState<number | null>(null)
+  const solved = result?.correct ?? false
+
+  const onValue = useCallback((h: number) => {
+    live.current = h
+  }, [])
+
+  const check = () => {
+    const r = checkDropTarget(step, live.current)
+    setResult({ correct: r.correct, message: r.message })
+    setAttempts((a) => a + 1)
+    setLastH(Math.round(live.current))
+    onSolved(r.correct, Math.round(live.current), step.concept)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
+      <DropTarget
+        targetTime={step.targetTime}
+        gravity={step.gravity}
+        onValue={onValue}
+        revealed={result !== null}
+        correct={result?.correct}
+      />
+
+      {result && (
+        <Feedback correct={result.correct} message={result.message} explanation={step.explanation} takeaway={step.takeaway} />
+      )}
+
+      <AiTutor lesson={lesson} step={step} attempts={attempts} lastAnswer={lastH} solved={solved} masteryScore={masteryScore} />
+
+      {solved ? (
+        <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
+      ) : (
+        <PrimaryButton onClick={check}>Check the fall</PrimaryButton>
+      )}
+    </div>
+  )
+}
+
+function PlotPositionView({
+  step,
+  lesson,
+  masteryScore,
+  onSolved,
+  onContinue,
+  continueLabel,
+}: {
+  step: Extract<Step, { type: 'plot-position' }>
+  lesson: Lesson
+  masteryScore?: number
+  onSolved: Props['onSolved']
+  onContinue: () => void
+  continueLabel: string
+}) {
+  const live = useRef(0)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastPos, setLastPos] = useState<number | null>(null)
+  const solved = result?.correct ?? false
+  const max = step.max ?? Math.max(20, Math.ceil((step.velocity * step.time * 1.4) / 10) * 10)
+
+  const onValue = useCallback((p: number) => {
+    live.current = p
+  }, [])
+
+  const check = () => {
+    const r = checkPlotPosition(step, live.current)
+    setResult(r)
+    setAttempts((a) => a + 1)
+    setLastPos(Math.round(live.current))
+    onSolved(r.correct, Math.round(live.current), step.concept)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
+      <NumberLinePlot max={max} onValue={onValue} revealed={result !== null} correct={result?.correct} />
+
+      {result && (
+        <Feedback correct={result.correct} message={result.message} explanation={step.explanation} takeaway={step.takeaway} />
+      )}
+
+      <AiTutor lesson={lesson} step={step} attempts={attempts} lastAnswer={lastPos} solved={solved} masteryScore={masteryScore} />
+
+      {solved ? (
+        <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
+      ) : (
+        <PrimaryButton onClick={check}>Check the spot</PrimaryButton>
+      )}
+    </div>
+  )
+}
+
+function StopFallView({
+  step,
+  lesson,
+  masteryScore,
+  onSolved,
+  onContinue,
+  continueLabel,
+}: {
+  step: Extract<Step, { type: 'stop-fall' }>
+  lesson: Lesson
+  masteryScore?: number
+  onSolved: Props['onSolved']
+  onContinue: () => void
+  continueLabel: string
+}) {
+  const live = useRef<number | null>(null)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastD, setLastD] = useState<number | null>(null)
+  const solved = result?.correct ?? false
+
+  const onValue = useCallback((d: number) => {
+    live.current = d
+  }, [])
+
+  const check = () => {
+    if (live.current == null) return
+    const r = checkStopFall(step, live.current)
+    setResult(r)
+    setAttempts((a) => a + 1)
+    setLastD(Math.round(live.current))
+    onSolved(r.correct, Math.round(live.current), step.concept)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
+      <StopFall targetDistance={step.targetDistance} height={step.height} gravity={step.gravity} onValue={onValue} />
+
+      {result && (
+        <Feedback correct={result.correct} message={result.message} explanation={step.explanation} takeaway={step.takeaway} />
+      )}
+
+      <AiTutor lesson={lesson} step={step} attempts={attempts} lastAnswer={lastD} solved={solved} masteryScore={masteryScore} />
+
+      {solved ? (
+        <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
+      ) : (
+        <PrimaryButton onClick={check}>Check my timing</PrimaryButton>
+      )}
+    </div>
+  )
+}
+
+function CurveAimView({
+  step,
+  lesson,
+  masteryScore,
+  onSolved,
+  onContinue,
+  continueLabel,
+}: {
+  step: Extract<Step, { type: 'curve-aim' }>
+  lesson: Lesson
+  masteryScore?: number
+  onSolved: Props['onSolved']
+  onContinue: () => void
+  continueLabel: string
+}) {
+  const live = useRef(20)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [lastAngle, setLastAngle] = useState<number | null>(null)
+  const solved = result?.correct ?? false
+
+  const onValue = useCallback((a: number) => {
+    live.current = a
+  }, [])
+
+  const check = () => {
+    const r = checkCurveAim(step, live.current)
+    setResult({ correct: r.correct, message: r.message })
+    setAttempts((a) => a + 1)
+    setLastAngle(Math.round(live.current))
+    onSolved(r.correct, Math.round(live.current), step.concept)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
+      <RangeAim
+        speed={step.speed}
+        targetRange={step.targetRange}
+        gravity={step.gravity}
+        onValue={onValue}
+        revealed={result !== null}
+        correct={result?.correct}
+      />
+
+      {result && (
+        <Feedback correct={result.correct} message={result.message} explanation={step.explanation} takeaway={step.takeaway} />
+      )}
+
+      <AiTutor lesson={lesson} step={step} attempts={attempts} lastAnswer={lastAngle} solved={solved} masteryScore={masteryScore} />
+
+      {solved ? (
+        <PrimaryButton onClick={onContinue}>{continueLabel}</PrimaryButton>
+      ) : (
+        <PrimaryButton onClick={check}>Check the aim</PrimaryButton>
       )}
     </div>
   )

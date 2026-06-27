@@ -2,9 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUserData } from '../context/UserDataContext'
 import { lessonMetas } from '../content/course'
-import { XP_PER_LEVEL } from '../types/user'
+import { levelProgress } from '../types/user'
 import ProgressRing from '../components/ProgressRing'
 import FlameIcon from '../components/FlameIcon'
+import MasteryPanel from '../components/MasteryPanel'
 
 export default function Profile() {
   const { logout } = useAuth()
@@ -13,7 +14,7 @@ export default function Profile() {
 
   if (!ready || !profile) return <div className="h-64" />
 
-  const xpIntoLevel = profile.xp % XP_PER_LEVEL
+  const lp = levelProgress(profile.xp)
   const lessonsCompleted = lessonMetas.filter((m) => progress[m.id]?.status === 'completed').length
   const totalProblems = Object.values(progress).reduce(
     (sum, lp) => sum + Object.values(lp.stepStates ?? {}).filter((s) => s.correct).length,
@@ -28,7 +29,7 @@ export default function Profile() {
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
       <div className="card animate-fade-up flex items-center gap-4 p-5">
-        <ProgressRing value={xpIntoLevel / XP_PER_LEVEL} size={72} stroke={7} color="var(--color-gold)">
+        <ProgressRing value={lp.frac} size={72} stroke={7} color="var(--color-gold)">
           <span className="font-display text-xl font-semibold text-ink">
             {profile.displayName.charAt(0).toUpperCase()}
           </span>
@@ -37,7 +38,7 @@ export default function Profile() {
           <h1 className="font-display text-2xl font-semibold text-ink">{profile.displayName}</h1>
           <p className="truncate text-sm text-ink-soft">{profile.email}</p>
           <p className="mt-0.5 text-xs text-ink-mute">
-            Level {profile.level} · {xpIntoLevel}/{XP_PER_LEVEL} XP to next
+            Level {lp.level} · {lp.into}/{lp.span} XP to next
           </p>
         </div>
       </div>
@@ -53,10 +54,12 @@ export default function Profile() {
         <Stat label="Lessons completed" value={`${lessonsCompleted}`} suffix={`/ ${lessonMetas.length}`} delay={120} />
         <Stat label="Problems solved" value={`${totalProblems}`} suffix="" delay={160} />
         <Stat label="Total XP" value={`${profile.xp}`} suffix="★" delay={200} />
-        <Stat label="Level" value={`${profile.level}`} suffix="" delay={240} />
+        <Stat label="Level" value={`${lp.level}`} suffix="" delay={240} />
       </div>
 
-      <div className="card animate-fade-up p-5" style={{ animationDelay: '280ms' }}>
+      <MasteryPanel />
+
+      <div className="card animate-fade-up p-5" style={{ animationDelay: '340ms' }}>
         <h2 className="font-display text-lg font-semibold text-ink">Daily goal</h2>
         <p className="mt-1 text-sm text-ink-soft">
           You're aiming for <span className="font-semibold text-ink">{profile.dailyGoalProblems} questions a day</span>.

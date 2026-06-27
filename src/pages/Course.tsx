@@ -30,6 +30,12 @@ export default function Course() {
             />
           </div>
         </div>
+        <Link
+          to="/practice"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-brand/30 bg-brand-tint px-4 py-2.5 text-sm font-semibold text-brand-strong transition hover:bg-brand-soft"
+        >
+          <span aria-hidden>✦</span> Practice any concept
+        </Link>
       </div>
 
       <div className="mt-7">

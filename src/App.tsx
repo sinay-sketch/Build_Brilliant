@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 import Course from './pages/Course'
 import Lesson from './pages/Lesson'
+import Practice from './pages/Practice'
 import Profile from './pages/Profile'
 
 function AppLayout() {
@@ -26,6 +27,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/course" element={<Course />} />
+          <Route path="/practice" element={<Practice />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
         <Route path="/lesson/:lessonId" element={<Lesson />} />

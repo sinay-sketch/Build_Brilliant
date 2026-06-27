@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { useUserData } from '../context/UserDataContext'
 import { kinematicsCourse, lessonMetas } from '../content/course'
 import { lessonProgressPercent, lessonUiStatus, recommendNext } from '../lib/path'
-import { XP_PER_LEVEL } from '../types/user'
+import { levelProgress } from '../types/user'
 import ProgressRing from '../components/ProgressRing'
 import FlameIcon from '../components/FlameIcon'
+import CoachCard from '../components/CoachCard'
 
 export default function Home() {
   const { profile, progress, todayActivity, ready, error } = useUserData()
@@ -20,8 +21,8 @@ export default function Home() {
   const next = recommendNext(lessonMetas, progress)
   const firstName = profile.displayName.split(' ')[0]
 
-  const xpIntoLevel = profile.xp % XP_PER_LEVEL
-  const levelFrac = xpIntoLevel / XP_PER_LEVEL
+  const lp = levelProgress(profile.xp)
+  const levelFrac = lp.frac
 
   const lessonsCompleted = lessonMetas.filter((m) => progress[m.id]?.status === 'completed').length
   const totalProblems = Object.values(progress).reduce(
@@ -70,12 +71,14 @@ export default function Home() {
         <RingStat
           color="var(--color-gold)"
           value={levelFrac}
-          centerTop={`${profile.level}`}
+          centerTop={`${lp.level}`}
           centerSub="lvl"
-          label={`${xpIntoLevel}/${XP_PER_LEVEL} XP`}
-          hint={`Level ${profile.level}. Earn XP by solving problems — ${XP_PER_LEVEL - xpIntoLevel} XP to level ${profile.level + 1}.`}
+          label={`${lp.into}/${lp.span} XP`}
+          hint={`Level ${lp.level}. Earn XP by solving problems — ${lp.toNext} XP to level ${lp.level + 1}.`}
         />
       </div>
+
+      <CoachCard />
 
       {/* Recommended next — hero */}
       {next && (

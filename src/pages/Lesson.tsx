@@ -9,7 +9,7 @@ import StepView from '../components/StepView'
 export default function Lesson() {
   const { lessonId = '' } = useParams()
   const navigate = useNavigate()
-  const { progress, startLesson, setCurrentStep, submitProblem, completeLesson, ready } = useUserData()
+  const { progress, mastery, startLesson, setCurrentStep, submitProblem, completeLesson, ready } = useUserData()
   const lesson = getLesson(lessonId)
 
   const [index, setIndex] = useState(0)
@@ -109,7 +109,14 @@ export default function Lesson() {
       {phase && <PhaseBar phase={phase} />}
 
       <div className="card animate-fade-up p-5 sm:p-6" key={step.id}>
-        <StepView step={step} onSolved={handleSolved} onContinue={handleContinue} isLast={index === total - 1} />
+        <StepView
+          step={step}
+          lesson={lesson}
+          masteryScore={step.concept ? mastery[step.concept]?.score : undefined}
+          onSolved={handleSolved}
+          onContinue={handleContinue}
+          isLast={index === total - 1}
+        />
       </div>
     </div>
   )
@@ -164,7 +171,7 @@ function LessonIntro({
       <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-ink">{lesson.title}</h1>
 
       <div className="card mt-5 p-5">
-        <p className="eyebrow text-ink-mute">The question</p>
+        <p className="eyebrow text-ink-mute">By the end, you&apos;ll be able to answer</p>
         <p className="mt-2 font-display text-lg leading-relaxed text-ink">{intro.hook}</p>
       </div>
 
@@ -270,8 +277,15 @@ function Completion({ lesson }: { lesson: LessonType }) {
       )}
 
       <Link
+        to="/practice"
+        className="mt-4 block w-full rounded-xl border border-brand/40 bg-brand-tint py-3 text-center font-semibold text-brand-strong transition hover:bg-brand-soft"
+      >
+        Keep practicing your weak spots
+      </Link>
+
+      <Link
         to="/"
-        className="mt-4 w-full rounded-xl border border-line bg-surface py-3 font-semibold text-ink transition hover:border-brand/50"
+        className="mt-3 w-full rounded-xl border border-line bg-surface py-3 font-semibold text-ink transition hover:border-brand/50"
       >
         Back to home
       </Link>

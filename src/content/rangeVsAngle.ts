@@ -1,0 +1,382 @@
+import type { Lesson } from '../types/content'
+
+// Hand-authored lesson. Builds on Projectile Motion, going deep on how launch
+// angle controls range. Interactivity uses the range-vs-angle curve, the
+// cannon, and a predict-the-landing shot. g = 9.8 m/s^2 throughout.
+
+export const rangeVsAngleLesson: Lesson = {
+  id: 'range-vs-angle',
+  courseId: 'kinematics',
+  order: 4,
+  title: 'Range vs. Angle',
+  concept: 'Why 45° throws farthest, and why complementary angles tie.',
+  estMinutes: 20,
+  prerequisites: ['projectile-motion'],
+  playable: true,
+  intro: {
+    hook: 'For a fixed speed, there is one angle that throws the farthest — and a surprising pattern hiding in all the others. What is going on?',
+    objectives: [
+      'Discover the maximum-range angle by feel, then prove it',
+      'Use R = v²·sin(2θ)/g to compute range for any angle',
+      'Predict the second angle that lands at the same distance',
+      'Solve for the speed or angle needed to reach a target',
+    ],
+    whyItMatters:
+      'Choosing an angle is the core decision in everything from a free throw to artillery. This is where projectile motion becomes a tool you can aim.',
+  },
+  bigIdea:
+    'Range trades two competing needs — time in the air and forward speed — and sin(2θ) captures the tug-of-war, peaking at 45° and pairing angles that sum to 90°.',
+  steps: [
+    // ---------------- PREDICT ----------------
+    {
+      id: 'rva-predict',
+      type: 'predict',
+      phase: 'predict',
+      concept: 'angle-range',
+      prompt:
+        'Same launch speed, two throws: one at a flat 20°, one at a steep 70°. Which lands farther away?',
+      choices: [
+        { id: 'flat', label: 'The flat 20° throw' },
+        { id: 'steep', label: 'The steep 70° throw' },
+        { id: 'tie', label: 'They land about the same distance' },
+      ],
+      correctId: 'tie',
+      perChoiceFeedback: {
+        flat: 'Close — flat throws are fast but spend little time aloft. There is a matching steep angle that ties it.',
+        steep: 'Steep throws hang in the air but barely move forward. A matching flat angle ties it.',
+        tie: 'Exactly — 20° and 70° add to 90°, and that makes their ranges match. We will see why.',
+      },
+      explanation:
+        'Neither extreme wins here: 20° and 70° are complementary (they sum to 90°), so they produce the same range. One is fast and flat, the other slow and high.',
+      takeaway: 'Angles that sum to 90° land at the same distance.',
+      visual: { angleDeg: 20, speed: 22, gravity: 9.8, editable: ['angle'] },
+    },
+
+    // ---------------- EXPLORE ----------------
+    {
+      id: 'rva-curve',
+      type: 'interactive',
+      phase: 'explore',
+      widget: 'range-curve',
+      config: { angleDeg: 30, speed: 22 },
+      title: 'The shape of range',
+      body: 'This plots range against launch angle. Drag the angle and watch the marker ride the curve. Where is it highest? And notice the hollow marker — the partner angle that lands at the exact same distance.',
+      keyPoints: [
+        'The curve peaks at 45° — the maximum-range angle.',
+        'It is symmetric: θ and 90 − θ sit at the same height.',
+        'More speed lifts the whole curve upward.',
+      ],
+    },
+    {
+      id: 'rva-dial',
+      type: 'slider-estimate',
+      phase: 'explore',
+      concept: 'angle-range',
+      prompt:
+        'Now on the cannon. Speed is fixed — drag the angle to send the ball as far as you can. Watch the Range readout rise and then fall, and park it at the farthest-reaching angle.',
+      sim: { angleDeg: 22, speed: 22, gravity: 9.8, editable: ['angle'] },
+      judge: 'angle',
+      answer: 45,
+      tolerance: 6,
+      hints: ['Push past the flat angles and watch the Range number climb.', 'It peaks in the middle, not at an extreme.'],
+      explanation: 'Range is largest at 45°. Below it you sacrifice air time; above it you sacrifice forward speed.',
+      takeaway: 'You felt it: 45° gives the maximum range.',
+    },
+    {
+      id: 'rva-beyond-45',
+      type: 'predict',
+      phase: 'explore',
+      concept: 'angle-range',
+      prompt: 'Starting at 45° and raising the angle further toward 70°, the landing distance will...',
+      choices: [
+        { id: 'more', label: 'Keep increasing' },
+        { id: 'less', label: 'Start decreasing' },
+        { id: 'same', label: 'Stay the same' },
+      ],
+      correctId: 'less',
+      perChoiceFeedback: {
+        more: 'Past 45° the curve turns downward — check the range plot again.',
+        less: 'Right — beyond 45° you trade away too much forward speed, so range drops.',
+        same: 'It changes — the curve falls off after the 45° peak.',
+      },
+      explanation: 'The range curve peaks at 45°, then falls. Above 45°, more height comes at the cost of forward speed.',
+      takeaway: 'Past 45°, steeper means shorter.',
+      visual: { angleDeg: 45, speed: 22, gravity: 9.8, editable: ['angle'] },
+    },
+
+    // ---------------- BUILD ----------------
+    {
+      id: 'rva-formula',
+      type: 'concept',
+      phase: 'build',
+      concept: 'range-reasoning',
+      title: 'The range formula',
+      body: 'Range is forward speed times time aloft. Substituting the component formulas and simplifying with a trig identity folds everything into one clean expression.',
+      formula: {
+        expr: 'R = v² · sin(2θ) / g',
+        terms: [
+          { symbol: 'R', meaning: 'horizontal range (m)' },
+          { symbol: 'v', meaning: 'launch speed (m/s)' },
+          { symbol: '2θ', meaning: 'twice the launch angle' },
+          { symbol: 'g', meaning: 'gravity, 9.8 m/s²' },
+        ],
+      },
+      keyPoints: ['sin(2θ) is largest when 2θ = 90°, i.e. θ = 45°.', 'Range scales with v² — double the speed, quadruple the range.'],
+    },
+    {
+      id: 'rva-range-numeric',
+      type: 'numeric',
+      phase: 'practice',
+      concept: 'range-reasoning',
+      prompt: 'Use R = v²·sin(2θ)/g. For v = 20 m/s, θ = 45°, what is the range? (sin90° = 1)',
+      answer: 40.8,
+      unit: 'm',
+      tolerance: 2,
+      min: 0,
+      max: 150,
+      hints: ['At 45°, sin(2θ) = sin90° = 1, so R = v²/g.', 'That is 400 / 9.8.'],
+      explanation: 'R = v²·sin90°/g = 400 × 1 / 9.8 ≈ 40.8 m.',
+      solution: ['2θ = 90°, sin90° = 1.', 'R = v²/g = 20² / 9.8.', '= 400 / 9.8.', '≈ 40.8 m.'],
+      takeaway: 'At 45°, range is simply v²/g.',
+    },
+    {
+      id: 'rva-range-numeric-2',
+      type: 'numeric',
+      phase: 'practice',
+      concept: 'range-reasoning',
+      prompt: 'A non-45° case: v = 24 m/s, θ = 30°. What is the range? (sin60° ≈ 0.866)',
+      answer: 50.9,
+      unit: 'm',
+      tolerance: 2.5,
+      min: 0,
+      max: 150,
+      hints: ['2θ = 60°, sin60° ≈ 0.866.', 'R = 24² × 0.866 / 9.8.'],
+      explanation: 'R = v²·sin(2θ)/g = 576 × 0.866 / 9.8 ≈ 50.9 m.',
+      solution: ['2θ = 60°, sin60° ≈ 0.866.', 'R = 576 × 0.866 / 9.8.', '= 498.8 / 9.8.', '≈ 50.9 m.'],
+      takeaway: 'The full formula handles any angle, not just 45°.',
+    },
+    {
+      id: 'rva-double-speed',
+      type: 'mcq',
+      phase: 'build',
+      concept: 'range-reasoning',
+      prompt: 'Keeping the angle the same, you double the launch speed. The range becomes...',
+      choices: [
+        { id: '2x', label: 'Twice as long' },
+        { id: '4x', label: 'Four times as long' },
+        { id: 'same', label: 'Unchanged' },
+      ],
+      correctId: '4x',
+      perChoiceFeedback: {
+        '2x': 'Speed appears squared in the formula, so the effect is stronger than doubling.',
+        '4x': 'Right — R ∝ v², so doubling v multiplies range by 2² = 4.',
+        same: 'Speed strongly affects range; it appears as v² in the formula.',
+      },
+      explanation: 'R = v²·sin(2θ)/g, so range is proportional to v². Doubling the speed quadruples the range.',
+      takeaway: 'Range grows with the square of speed.',
+    },
+
+    // ---------------- complementary angles ----------------
+    {
+      id: 'rva-complementary',
+      type: 'predict',
+      phase: 'build',
+      concept: 'complementary-angles',
+      prompt:
+        'Same speed throughout. You hit 35 m with a 25° launch. Which other angle also lands at about 35 m?',
+      choices: [
+        { id: '45', label: '45 degrees' },
+        { id: '65', label: '65 degrees' },
+        { id: '80', label: '80 degrees' },
+      ],
+      correctId: '65',
+      perChoiceFeedback: {
+        '45': '45° actually reaches farther than 35 m here. Look for the angle that mirrors 25° about 45°.',
+        '65': 'Yes — 25° and 65° sum to 90°, so sin(2θ) matches and the ranges are equal.',
+        '80': 'Too steep — that lands much shorter. You want the partner that makes 90° with 25°.',
+      },
+      explanation:
+        'Complementary angles (summing to 90°) give sin(2θ) the same value, so they share a range. 25° pairs with 65°: one flat and fast, one high and slow.',
+      takeaway: 'Find the complement (90° − θ) for a second angle with the same range.',
+      visual: { angleDeg: 25, speed: 20, gravity: 9.8, editable: ['angle'] },
+    },
+    {
+      id: 'rva-complementary-numeric',
+      type: 'numeric',
+      phase: 'practice',
+      concept: 'complementary-angles',
+      prompt:
+        'Check the symmetry yourself. For v = 20 m/s, θ = 60°, compute the range. (sin120° ≈ 0.866 — the same as sin60°.)',
+      answer: 35.3,
+      unit: 'm',
+      tolerance: 2,
+      min: 0,
+      max: 120,
+      hints: ['2θ = 120°, and sin120° ≈ 0.866.', 'R = 400 × 0.866 / 9.8 — the same as the 30° case.'],
+      explanation:
+        'R = 400 × sin120° / 9.8 = 400 × 0.866 / 9.8 ≈ 35.3 m — identical to a 30° launch, because 30° and 60° are complementary.',
+      solution: ['2θ = 120°, sin120° ≈ 0.866.', 'R = 400 × 0.866 / 9.8.', '≈ 35.3 m (same as 30°).'],
+      takeaway: '30° and 60° give the same range — proven by the numbers.',
+    },
+    {
+      id: 'rva-two-paths',
+      type: 'concept',
+      phase: 'build',
+      concept: 'complementary-angles',
+      title: 'The flat shot and the lob',
+      body: 'Complementary angles land in the same spot but fly completely differently: a small angle gives a fast, flat liner; the large complement gives a slow, high lob. Same range, different journey.',
+      keyPoints: [
+        'Small angle: fast, low, quick to arrive.',
+        'Large complement: high, slow, long hang time.',
+        'They meet only at 45°, where the two solutions merge into one.',
+      ],
+    },
+    {
+      id: 'rva-curve-complement',
+      type: 'interactive',
+      phase: 'practice',
+      widget: 'range-curve',
+      config: { angleDeg: 25, speed: 24 },
+      title: 'Find the partner angle',
+      body: 'See the symmetry for yourself. Drag the angle and watch the hollow marker — that is the complement, always sitting at the same range. Slide to 25° and read its partner, then try 40°.',
+      keyPoints: ['θ and 90 − θ share the same range.', 'The pair meets only at the 45° peak.', 'More speed lifts the whole curve upward.'],
+    },
+
+    // ---------------- PRACTICE ----------------
+    {
+      id: 'rva-curve-aim',
+      type: 'curve-aim',
+      phase: 'practice',
+      concept: 'angle-range',
+      prompt: 'Aim with the curve: drag the angle until the range meets the gold target line at 40 m. (Two angles work — find either.)',
+      targetRange: 40,
+      speed: 24,
+      tolerance: 3,
+      hints: ['Slide the marker until it touches the gold target line.', 'About 21° — or its complement 69° — both reach 40 m at this speed.'],
+      explanation: 'At 24 m/s, sin(2θ) = 40·9.8 / 24² ≈ 0.68, giving θ ≈ 21° or 69° — complementary angles sharing the same range.',
+      takeaway: 'On the curve, two angles hit any reachable target.',
+    },
+    {
+      id: 'rva-solve-speed',
+      type: 'numeric',
+      phase: 'practice',
+      concept: 'range-reasoning',
+      prompt: 'Solve backward: at θ = 45°, what speed is needed to reach a 50 m target? (v = √(R·g))',
+      answer: 22.1,
+      unit: 'm/s',
+      tolerance: 1.5,
+      min: 0,
+      max: 60,
+      hints: ['At 45°, R = v²/g, so v = √(R·g).', 'v = √(50 × 9.8) = √490.'],
+      explanation: 'At 45°, R = v²/g, so v = √(R·g) = √(50·9.8) = √490 ≈ 22.1 m/s.',
+      solution: ['At 45°, R = v²/g.', 'v = √(R·g) = √(50 × 9.8).', '= √490.', '≈ 22.1 m/s.'],
+      takeaway: 'Rearrange the range formula to find a needed speed.',
+    },
+    {
+      id: 'rva-tap-landing',
+      type: 'tap-landing',
+      phase: 'practice',
+      concept: 'range-reasoning',
+      prompt:
+        'No arc shown. This shot launches at 38° and 20 m/s. Predict where it lands — drag the marker, then fire to check.',
+      sim: { angleDeg: 38, speed: 20, gravity: 9.8, editable: [] },
+      tolerance: 5,
+      explanation:
+        'Range = v²·sin(2θ)/g = 400·sin76°/9.8 ≈ 40 m. A near-45° shot at this speed reaches about 40 m.',
+      takeaway: 'Use the formula to call the landing before firing.',
+    },
+    {
+      id: 'rva-hit-target',
+      type: 'sim-challenge',
+      phase: 'practice',
+      concept: 'angle-range',
+      prompt: 'Put it to work: adjust angle and speed to land the ball on the target 50 m away.',
+      sim: {
+        angleDeg: 30,
+        speed: 20,
+        gravity: 9.8,
+        editable: ['angle', 'speed'],
+        target: { distance: 50, radius: 2.5 },
+      },
+      goal: { kind: 'hitTarget' },
+      hints: ['45° gives the most distance for a given speed — start there.', 'Short? add speed. Long? ease back.', 'Try ~45° with a speed near 22–23 m/s.'],
+      explanation: 'Reaching a target is a trade-off: near 45° you need the least speed, but many angle/speed pairs work.',
+      takeaway: 'To hit a target, balance angle and speed together.',
+    },
+    {
+      id: 'rva-second-angle',
+      type: 'mcq',
+      phase: 'practice',
+      concept: 'complementary-angles',
+      prompt: 'You just hit the 50 m target at about 45°. Suppose instead you hit it at 30°. What is the OTHER angle (same speed) that also reaches 50 m?',
+      choices: [
+        { id: '50', label: '50°' },
+        { id: '60', label: '60°' },
+        { id: '75', label: '75°' },
+      ],
+      correctId: '60',
+      perChoiceFeedback: {
+        '50': 'Close, but the complement must sum to 90° with 30°.',
+        '60': 'Right — 30° + 60° = 90°, so they share the same range.',
+        '75': 'That pairs with 15°, not 30°.',
+      },
+      explanation: '30° and 60° are complementary (sum to 90°), so they land at the same distance for the same speed.',
+      takeaway: 'Every target below max range has two angles: θ and 90° − θ.',
+    },
+
+    // ---------------- MASTER ----------------
+    {
+      id: 'rva-recall',
+      type: 'recall',
+      phase: 'master',
+      concept: 'complementary-angles',
+      prompt:
+        'From memory: a ball launched at 40° lands 30 m away. With the same speed, which other angle also lands at 30 m?',
+      choices: [
+        { id: '50', label: '50 degrees' },
+        { id: '55', label: '55 degrees' },
+        { id: '60', label: '60 degrees' },
+      ],
+      correctId: '50',
+      explanation: '50°. Complementary angles sum to 90°, and 40° + 50° = 90°, so the two ranges match.',
+      takeaway: 'The complement of θ always shares its range.',
+    },
+    {
+      id: 'rva-recall-2',
+      type: 'recall',
+      phase: 'master',
+      concept: 'range-reasoning',
+      prompt: 'From memory: which angle gives the maximum range for a fixed speed?',
+      choices: [
+        { id: '30', label: '30 degrees' },
+        { id: '45', label: '45 degrees' },
+        { id: '60', label: '60 degrees' },
+      ],
+      correctId: '45',
+      explanation: 'Range is R = v²·sin(2θ)/g, largest when sin(2θ) = 1, i.e. 2θ = 90°, so θ = 45°.',
+      takeaway: '45° is the maximum-range angle.',
+    },
+    {
+      id: 'rva-synthesis',
+      type: 'mcq',
+      phase: 'master',
+      concept: 'angle-range',
+      prompt:
+        'Two launches use the same speed: one at 35°, one at 55°. Compare their ranges and their peak heights.',
+      choices: [
+        { id: 'samerange', label: 'Same range; the 55° shot goes higher' },
+        { id: 'samehigh', label: 'Same height; the 35° shot goes farther' },
+        { id: 'allsame', label: 'Everything is identical' },
+      ],
+      correctId: 'samerange',
+      perChoiceFeedback: {
+        samerange: 'Right — complementary angles share a range, but the steeper 55° shot climbs higher.',
+        samehigh: 'Heights differ — the steeper angle always peaks higher. Their ranges are what match.',
+        allsame: 'Only the range matches; the steeper shot is higher and slower.',
+      },
+      explanation:
+        '35° and 55° are complementary, so their ranges are equal. But the steeper 55° launch has more upward speed, so it reaches a greater peak height.',
+      takeaway: 'Complementary angles tie on range, not on height.',
+    },
+  ],
+}

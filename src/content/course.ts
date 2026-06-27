@@ -1,6 +1,10 @@
 import type { Course, Lesson, LessonMeta } from '../types/content'
 import { isProblemStep } from '../types/content'
 import { projectileLesson } from './projectile'
+import { freeFallLesson } from './freeFall'
+import { rangeVsAngleLesson } from './rangeVsAngle'
+import { positionVelocityLesson } from './positionVelocity'
+import { hitTheTargetLesson } from './hitTheTarget'
 
 export const kinematicsCourse: Course = {
   id: 'kinematics',
@@ -27,9 +31,9 @@ export const lessonMetas: LessonMeta[] = [
     order: 1,
     title: 'Position & Velocity',
     concept: 'Where something is and how fast it moves.',
-    estMinutes: 10,
+    estMinutes: 18,
     prerequisites: [],
-    playable: false,
+    playable: true,
   },
   {
     id: 'free-fall',
@@ -37,9 +41,9 @@ export const lessonMetas: LessonMeta[] = [
     order: 2,
     title: 'Free Fall & Gravity',
     concept: 'Everything falls at the same rate.',
-    estMinutes: 12,
+    estMinutes: 18,
     prerequisites: ['position-velocity'],
-    playable: false,
+    playable: true,
   },
   {
     id: 'projectile-motion',
@@ -47,7 +51,7 @@ export const lessonMetas: LessonMeta[] = [
     order: 3,
     title: 'Projectile Motion',
     concept: 'Horizontal and vertical motion are independent.',
-    estMinutes: 20,
+    estMinutes: 25,
     prerequisites: [],
     playable: true,
   },
@@ -57,9 +61,9 @@ export const lessonMetas: LessonMeta[] = [
     order: 4,
     title: 'Range vs. Angle',
     concept: 'Why 45 degrees wins, and complementary angles tie.',
-    estMinutes: 12,
+    estMinutes: 20,
     prerequisites: ['projectile-motion'],
-    playable: false,
+    playable: true,
   },
   {
     id: 'hit-the-target',
@@ -67,14 +71,18 @@ export const lessonMetas: LessonMeta[] = [
     order: 5,
     title: 'Hit the Target',
     concept: 'Combine angle, speed, and gravity to aim.',
-    estMinutes: 15,
+    estMinutes: 22,
     prerequisites: ['range-vs-angle'],
-    playable: false,
+    playable: true,
   },
 ]
 
 const fullLessons: Record<string, Lesson> = {
+  [positionVelocityLesson.id]: positionVelocityLesson,
+  [freeFallLesson.id]: freeFallLesson,
   [projectileLesson.id]: projectileLesson,
+  [rangeVsAngleLesson.id]: rangeVsAngleLesson,
+  [hitTheTargetLesson.id]: hitTheTargetLesson,
 }
 
 export function getLesson(id: string): Lesson | undefined {

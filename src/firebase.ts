@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
+import { USE_FUNCTIONS_EMULATOR } from './lib/ai/flags'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,3 +22,15 @@ const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const googleProvider = new GoogleAuthProvider()
+
+// AI proxy lives in Cloud Functions (region us-central1). The client only ever
+// calls these callables; the OpenAI key stays server-side in Secret Manager.
+export const functions = getFunctions(app, 'us-central1')
+
+if (USE_FUNCTIONS_EMULATOR) {
+  try {
+    connectFunctionsEmulator(functions, '127.0.0.1', 5001)
+  } catch {
+    // Emulator not running; client AI layer will fall back to authored content.
+  }
+}

@@ -11,7 +11,7 @@ import {
 import { db } from '../firebase'
 import { useAuth } from './AuthContext'
 import type { ConceptId } from '../types/content'
-import type { DailyActivity, LessonProgress, UserProfile } from '../types/user'
+import type { DailyActivity, LessonProgress, MasteryRecord, UserProfile } from '../types/user'
 import {
   DEFAULT_DAILY_GOAL,
   XP_PER_LESSON,
@@ -19,6 +19,7 @@ import {
   levelForXp,
 } from '../types/user'
 import { advanceStreak, dayKey, emptyStreak } from '../lib/streak'
+import { updateMastery } from '../lib/mastery'
 
 interface SubmitArgs {
   lessonId: string
@@ -26,6 +27,13 @@ interface SubmitArgs {
   concept?: ConceptId
   correct: boolean
   answer: string | number | null
+  /** Whether this submission was the learner's first attempt at the step. */
+  firstAttempt?: boolean
+}
+
+interface PracticeArgs {
+  concept: ConceptId
+  correct: boolean
 }
 
 interface UserDataValue {
@@ -33,10 +41,12 @@ interface UserDataValue {
   error: string | null
   profile: UserProfile | null
   progress: Record<string, LessonProgress>
+  mastery: Partial<Record<ConceptId, MasteryRecord>>
   todayActivity: DailyActivity
   startLesson: (lessonId: string) => Promise<void>
   setCurrentStep: (lessonId: string, index: number) => Promise<void>
   submitProblem: (args: SubmitArgs) => Promise<void>
+  recordPractice: (args: PracticeArgs) => Promise<void>
   completeLesson: (lessonId: string) => Promise<void>
 }
 
@@ -59,6 +69,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [progress, setProgress] = useState<Record<string, LessonProgress>>({})
+  const [mastery, setMastery] = useState<Partial<Record<ConceptId, MasteryRecord>>>({})
   const [todayActivity, setTodayActivity] = useState<DailyActivity>(emptyActivity)
   // The app is only "ready" once BOTH the profile and the lesson progress have
   // loaded. Gating on the profile alone caused a race where a lesson could be
@@ -77,6 +88,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setProfile(null)
       setProgress({})
+      setMastery({})
       setTodayActivity(emptyActivity)
       setProfileLoaded(false)
       setProgressLoaded(false)
@@ -160,6 +172,15 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
           setTodayActivity((snap.data() as DailyActivity) ?? emptyActivity)
         }),
       )
+      unsubs.push(
+        onSnapshot(collection(db, 'users', uid, 'mastery'), (snap) => {
+          const next: Partial<Record<ConceptId, MasteryRecord>> = {}
+          snap.forEach((d) => {
+            next[d.id as ConceptId] = d.data() as MasteryRecord
+          })
+          setMastery(next)
+        }),
+      )
     }).catch((err) => {
       if (cancelled) return
       setError(friendlyFirestoreError(err))
@@ -177,6 +198,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
     profileRef: doc(db, 'users', uid),
     progressRef: (lessonId: string) => doc(db, 'users', uid, 'progress', lessonId),
     activityRef: doc(db, 'users', uid, 'activity', today),
+    masteryRef: (conceptId: string) => doc(db, 'users', uid, 'mastery', conceptId),
   })
 
   const value: UserDataValue = {
@@ -184,6 +206,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
     error,
     profile,
     progress,
+    mastery,
     todayActivity,
 
     async startLesson(lessonId) {
@@ -216,7 +239,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       )
     },
 
-    async submitProblem({ lessonId, stepId, correct, answer }) {
+    async submitProblem({ lessonId, stepId, concept, correct, answer }) {
       if (!user || !profile) return
       const r = refs(user.uid)
       const lp = progress[lessonId]
@@ -225,8 +248,15 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       const lessonCompleted = lp?.status === 'completed'
       const prevStep = lp?.stepStates[stepId] ?? { attempts: 0, correct: false, lastAnswer: null }
       const newlyCorrect = !lessonCompleted && correct && !prevStep.correct
+      // Mastery reflects genuine recall, so only the FIRST attempt at a step
+      // counts (and never on a replayed, already-completed lesson).
+      const recordsMastery = !lessonCompleted && concept != null && prevStep.attempts === 0
 
       const batch = writeBatch(db)
+
+      if (recordsMastery) {
+        batch.set(r.masteryRef(concept), updateMastery(mastery[concept], correct), { merge: true })
+      }
 
       const nextStepStates = {
         ...(lp?.stepStates ?? {}),
@@ -246,6 +276,38 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       )
 
       if (newlyCorrect) {
+        const activity: DailyActivity = {
+          problemsSolved: todayActivity.problemsSolved + 1,
+          lessonsCompleted: todayActivity.lessonsCompleted,
+          xpEarned: todayActivity.xpEarned + XP_PER_PROBLEM,
+        }
+        batch.set(r.activityRef, activity, { merge: true })
+
+        const newXp = profile.xp + XP_PER_PROBLEM
+        const profileUpdate: Partial<UserProfile> = {
+          xp: newXp,
+          level: levelForXp(newXp),
+        }
+        const goalMet =
+          activity.problemsSolved >= profile.dailyGoalProblems || activity.lessonsCompleted >= 1
+        if (goalMet) profileUpdate.streak = advanceStreak(profile.streak, today)
+        batch.set(r.profileRef, profileUpdate, { merge: true })
+      }
+
+      await batch.commit()
+    },
+
+    // Practice-mode problems are generated and ephemeral (no lesson progress
+    // doc), but they still build mastery and feed the habit loop. Every answer
+    // updates mastery; a correct one awards XP and counts toward the daily goal.
+    async recordPractice({ concept, correct }) {
+      if (!user || !profile) return
+      const r = refs(user.uid)
+      const batch = writeBatch(db)
+
+      batch.set(r.masteryRef(concept), updateMastery(mastery[concept], correct), { merge: true })
+
+      if (correct) {
         const activity: DailyActivity = {
           problemsSolved: todayActivity.problemsSolved + 1,
           lessonsCompleted: todayActivity.lessonsCompleted,

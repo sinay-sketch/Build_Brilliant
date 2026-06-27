@@ -9,6 +9,15 @@ export type ConceptId =
   | 'complementary-angles'
   | 'trajectory-shape'
   | 'range-reasoning'
+  // Free Fall & Gravity lesson
+  | 'free-fall-rate'
+  | 'gravity-accel'
+  | 'fall-distance'
+  // Position & Velocity lesson
+  | 'speed-vs-velocity'
+  | 'displacement'
+  | 'velocity-graph'
+  | 'avg-velocity'
 
 export interface Choice {
   id: string
@@ -156,6 +165,97 @@ export interface SliderEstimateStep extends StepBase {
   takeaway?: string
 }
 
+/**
+ * Graded graph interaction (Position & Velocity): the learner drags a velocity
+ * slider until the position-time line passes through a target point. The judged
+ * value is the velocity; the correct answer is target.x / target.t.
+ */
+export interface GraphTargetStep extends StepBase {
+  type: 'graph-target'
+  prompt: string
+  /** The point the line must pass through, on a position-time graph. */
+  target: { t: number; x: number }
+  /** Tolerance on the velocity (m/s). */
+  tolerance: number
+  startV?: number
+  hints?: string[]
+  explanation: string
+  takeaway?: string
+}
+
+/**
+ * Graded drop interaction (Free Fall): the learner sets the drop height so the
+ * ball's fall lasts a target number of seconds, watching the live fall-time
+ * readout. The judged value is the resulting time t = sqrt(2h/g).
+ */
+export interface DropTargetStep extends StepBase {
+  type: 'drop-target'
+  prompt: string
+  /** Target fall time the learner must dial in (seconds). */
+  targetTime: number
+  /** Tolerance on the fall time (s). */
+  tolerance: number
+  gravity?: number
+  hints?: string[]
+  explanation: string
+  takeaway?: string
+}
+
+/**
+ * Graded number-line game (Position & Velocity): an object moves at a constant
+ * velocity; the learner drags a marker to where it is after `time` seconds.
+ * Correct position = velocity · time.
+ */
+export interface PlotPositionStep extends StepBase {
+  type: 'plot-position'
+  prompt: string
+  velocity: number
+  time: number
+  /** Tolerance on the placed position (m). */
+  tolerance: number
+  max?: number
+  hints?: string[]
+  explanation: string
+  takeaway?: string
+}
+
+/**
+ * Graded reaction game (Free Fall): a ball falls; the learner hits STOP when it
+ * has fallen the target distance (no live readout — they judge by eye). The
+ * judged value is the distance fallen at the moment of the stop.
+ */
+export interface StopFallStep extends StepBase {
+  type: 'stop-fall'
+  prompt: string
+  targetDistance: number
+  /** Total fall height available (m); must exceed targetDistance. */
+  height: number
+  /** Tolerance on the stopped distance (m). */
+  tolerance: number
+  gravity?: number
+  hints?: string[]
+  explanation: string
+  takeaway?: string
+}
+
+/**
+ * Graded curve game (Range vs. Angle): the learner drags the angle on the
+ * range-vs-angle curve until the range hits a target. Judged on the resulting
+ * range, so either complementary angle is accepted.
+ */
+export interface CurveAimStep extends StepBase {
+  type: 'curve-aim'
+  prompt: string
+  targetRange: number
+  speed: number
+  /** Tolerance on the range (m). */
+  tolerance: number
+  gravity?: number
+  hints?: string[]
+  explanation: string
+  takeaway?: string
+}
+
 /** Retrieval practice: recall from memory, no visual aid. */
 export interface RecallStep extends StepBase {
   type: 'recall'
@@ -167,7 +267,12 @@ export interface RecallStep extends StepBase {
 }
 
 /** Which hands-on widget an interactive step embeds. */
-export type InteractiveWidget = 'vector-components' | 'drop-race'
+export type InteractiveWidget =
+  | 'vector-components'
+  | 'drop-race'
+  | 'motion-graph'
+  | 'drop-tower'
+  | 'range-curve'
 
 /**
  * A hands-on exploration screen built around a dedicated interactive widget
@@ -179,7 +284,7 @@ export interface InteractiveStep extends StepBase {
   body: string
   widget: InteractiveWidget
   /** Optional starting values for the widget. */
-  config?: { angleDeg?: number; speed?: number; gravity?: number }
+  config?: { angleDeg?: number; speed?: number; gravity?: number; velocity?: number; height?: number }
   /** Optional things to look for while exploring. */
   keyPoints?: string[]
 }
@@ -194,6 +299,11 @@ export type Step =
   | InteractiveStep
   | TapLandingStep
   | SliderEstimateStep
+  | GraphTargetStep
+  | DropTargetStep
+  | PlotPositionStep
+  | StopFallStep
+  | CurveAimStep
 
 /** The framing screen shown before a lesson's first step. */
 export interface LessonIntro {
@@ -252,6 +362,11 @@ export const PROBLEM_STEP_TYPES: ReadonlyArray<Step['type']> = [
   'recall',
   'tap-landing',
   'slider-estimate',
+  'graph-target',
+  'drop-target',
+  'plot-position',
+  'stop-fall',
+  'curve-aim',
 ]
 
 export function isProblemStep(step: Step): boolean {

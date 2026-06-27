@@ -9,7 +9,7 @@ export const projectileLesson: Lesson = {
   order: 3,
   title: 'Projectile Motion',
   concept: 'Horizontal and vertical motion are independent; gravity only pulls down.',
-  estMinutes: 20,
+  estMinutes: 25,
   prerequisites: [],
   playable: true,
   intro: {

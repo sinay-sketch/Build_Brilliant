@@ -10,6 +10,12 @@ interactive lesson: **Projectile Motion**.
 Phase 1 contains **no AI**. Every problem, hint, and explanation is hand-authored,
 and all answer checking is deterministic client-side math.
 
+**Phase 2 adds AI as a strictly additive layer** (OpenAI, behind a Cloud
+Functions proxy): a Socratic tutor, "explain my mistake", an endless verified
+practice generator, and an adaptive coach. The app still teaches fully with AI
+turned off (`VITE_AI_ENABLED=false`) — every AI surface falls back to authored
+content. See [Phase 2: AI features](#phase-2-ai-features) below.
+
 ## What it does
 
 - One rich, interactive lesson (Projectile Motion) built as a sequence of
@@ -31,6 +37,7 @@ and all answer checking is deterministic client-side math.
 - React 19 + Vite + TypeScript
 - Tailwind CSS v4
 - Firebase Auth + Cloud Firestore
+- Firebase Cloud Functions v2 (AI proxy) + OpenAI (Phase 2)
 - Firebase Hosting (deploy)
 
 ## Architecture overview
@@ -39,12 +46,17 @@ and all answer checking is deterministic client-side math.
 src/
   content/        Structured lesson data (the content model, not HTML)
     projectile.ts   The full hand-authored Projectile Motion lesson
+    freeFall.ts     Free Fall & Gravity lesson (Phase 2)
+    rangeVsAngle.ts Range vs. Angle lesson (Phase 2)
     course.ts       Kinematics course + lesson metadata + lookups
   types/          TypeScript models for content and user data
   lib/            Pure logic: physics, answer checker, mastery, streaks, path
+    ai/             Phase 2 AI: flags, context builder, engine verifier,
+                    callable client, practice generator, coach
   context/        AuthContext (Firebase Auth) + UserDataContext (Firestore sync)
-  components/      Canvas, simulator, step renderer, feedback, nav
-  pages/          Login, Home, Course, Lesson, Profile
+  components/      Canvas, simulator, step renderer, feedback, AI tutor, nav
+  pages/          Login, Home, Course, Lesson, Practice, Profile
+functions/        Cloud Functions AI proxy (OpenAI; key stays server-side)
 ```
 
 - A **lesson is data**: a sequence of typed interactive steps (`concept`,
@@ -96,18 +108,72 @@ npm run dev
 
 Open the printed URL (defaults to http://localhost:5173).
 
-## Deploy (Firebase Hosting)
+## Phase 2: AI features
+
+All AI is grounded in the app's structured lesson state and verified against the
+deterministic physics engine. The OpenAI key never reaches the browser — it
+lives in a Cloud Functions secret. Every feature degrades to hand-authored
+content when AI is off or unavailable.
+
+**What we shipped (and why):**
+
+- **Conversational tutor (`aiHint` + `aiChat`)** — "I'm stuck" opens a chat: it
+  gives an initial nudge, then the learner can ask follow-up questions (including
+  "what did I do wrong?"). Grounded in the step's concept, phase, attempts, and
+  last answer; it never reveals the final answer, and respects the teaching
+  phase. Falls back to authored hints when AI is off/unreachable.
+- **Verified practice generator (`aiGenerateProblem`)** — endless fresh problems
+  at a difficulty adapted to mastery. The model only proposes a *scenario*; the
+  client computes the answer with `lib/physics` (`src/lib/ai/verify.ts`), so the
+  AI can never state a wrong number. Powers `/practice`.
+- **Adaptive coach (`aiCoach`)** — a personalized "what to focus on next" blurb
+  on Home, driven by real per-concept mastery. The lesson gating stays
+  deterministic; AI only personalizes the wording.
+
+**Deliberately skipped:** an open-ended chatbot, AI grading / overriding the
+deterministic checker, and runtime AI-generated full lessons or visuals. Spaced
+repetition and interleaving are reserved for Phase 3.
+
+**Architecture:** client AI layer in `src/lib/ai/*` (flags, structured-context
+builder, engine verifier, timeout-guarded callable wrappers, generator, coach);
+server proxy in `functions/` (per-feature callables, auth + per-user daily rate
+limits, persona/pedagogy system prompts). New Firestore: per-concept
+`users/{uid}/mastery/{conceptId}` and `users/{uid}/aiUsage/{yyyy-mm-dd}`.
+
+**Turn AI off:** set `VITE_AI_ENABLED=false` (or any per-feature flag) and the
+app runs as the pure Phase 1 experience.
+
+**Test the generation invariant:**
+
+```bash
+npx tsx scripts/verify-generation.ts
+```
+
+## Deploy
 
 ```bash
 # one-time
 npx firebase-tools@latest login
-# set your project id in .firebaserc (replace the placeholder), then:
+# set your project id in .firebaserc (already set to project1-678d2), then:
 npx firebase-tools@latest deploy --only firestore:rules
+
+# --- Phase 2 AI proxy (Cloud Functions) ---
+# Requires the Blaze (pay-as-you-go) plan. Set the OpenAI key as a secret:
+npx firebase-tools@latest functions:secrets:set OPENAI_API_KEY
+cd functions && npm install && cd ..
+npx firebase-tools@latest deploy --only functions
+
+# --- Frontend ---
 npm run build
 npx firebase-tools@latest deploy --only hosting
 ```
 
-Deployed link: _add after first deploy_
+Deployed link: https://project1-678d2.web.app
+
+> Console steps only the project owner can do: upgrade to the **Blaze** plan
+> (for Cloud Functions), provide the **OpenAI API key** (stored as the secret
+> above), and optionally enable **App Check**. The app works AI-off until these
+> are done.
 
 ## Phase roadmap
 
