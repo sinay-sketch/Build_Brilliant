@@ -34,7 +34,7 @@ export const positionVelocityLesson: Lesson = {
       phase: 'predict',
       concept: 'speed-vs-velocity',
       prompt:
-        'Two cars each read 60 km/h on the speedometer. One drives due east, the other due west. Do they have the same velocity?',
+        'Two cars each read 10 m/s on the speedometer. One drives due east, the other due west. Do they have the same velocity?',
       choices: [
         { id: 'yes', label: 'Yes — same number on the speedometer' },
         { id: 'no', label: 'No — they move in opposite directions' },
@@ -49,7 +49,7 @@ export const positionVelocityLesson: Lesson = {
       explanation:
         'Speed is just "how fast" (a number). Velocity is "how fast, and which way." Same speed, opposite directions = different velocities.',
       takeaway: 'Velocity carries a direction; speed does not.',
-      game: { kind: 'two-runners', config: { v1: 8, v2: -8 } },
+      game: { kind: 'two-runners', config: { v1: 10, v2: -10 } },
     },
 
     // ---------------- EXPLORE ----------------
@@ -198,7 +198,9 @@ export const positionVelocityLesson: Lesson = {
       explanation: 'v_avg = Δx / Δt = 100 m / 20 s = 5 m/s.',
       solution: ['Write v_avg = Δx / Δt.', 'v_avg = 100 / 20.', '= 5 m/s.'],
       takeaway: 'Average velocity = displacement ÷ time.',
-      game: { kind: 'scenario-line', config: { legs: [100] } },
+      // A trip with a ticking clock so v_avg = Δx ÷ Δt builds live. Starts on a
+      // different example (90 m / 15 s) so it models the method, not the answer.
+      game: { kind: 'avg-velocity-trip', config: { distance: 90, time: 15 } },
     },
 
     // ---------------- BUILD: velocity from a graph ----------------
@@ -250,19 +252,6 @@ export const positionVelocityLesson: Lesson = {
       solution: ['Slope = rise / run.', 'v = 40 / 5.', '= 8 m/s.'],
       takeaway: 'Velocity from a graph = rise ÷ run.',
       game: { kind: 'motion-graph', config: { velocity: 8 } },
-    },
-    {
-      id: 'pv-graph-target-1',
-      type: 'graph-target',
-      phase: 'practice',
-      concept: 'velocity-graph',
-      prompt: 'Your turn to draw it. Drag the velocity until your position-time line passes through the marked point.',
-      target: { t: 4, x: 24 },
-      tolerance: 0.6,
-      startV: 2,
-      hints: ['The line has to reach 24 m at t = 4 s.', 'The slope you need is 24 ÷ 4.'],
-      explanation: 'To pass through (4 s, 24 m), the slope must be 24 / 4 = 6 m/s — that is the velocity.',
-      takeaway: 'Setting the slope sets the velocity.',
     },
 
     // ---------------- PRACTICE ----------------
@@ -349,17 +338,6 @@ export const positionVelocityLesson: Lesson = {
         'Direction is exactly what makes the two differ.',
       ],
     },
-    {
-      id: 'pv-graph-recap',
-      type: 'interactive',
-      phase: 'master',
-      widget: 'motion-graph',
-      config: { velocity: -5 },
-      title: 'One last look before recall',
-      body: 'A negative velocity one more time — watch the line head downhill, meaning the object moves back toward the start. Then take on the final questions from memory.',
-      keyPoints: ['Downhill line = moving backward.', 'Flat line = at rest.', 'Steeper line = faster, in either direction.'],
-    },
-
     // ---------------- MASTER ----------------
     {
       id: 'pv-recall-1',

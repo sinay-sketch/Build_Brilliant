@@ -70,6 +70,7 @@ export type GameKind =
   | 'none'
   | 'motion-graph'
   | 'track-trip'
+  | 'avg-velocity-trip'
   | 'two-runners'
   | 'round-trip'
   | 'scenario-line'

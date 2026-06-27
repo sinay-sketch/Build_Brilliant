@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ConceptId, Formula, Lesson, Step } from '../types/content'
+import type { StepState } from '../types/user'
 import {
   checkChoiceAnswer,
   checkCurveAim,
@@ -17,6 +18,7 @@ import VectorComponents from './VectorComponents'
 import DropRace from './DropRace'
 import MotionGraph from './MotionGraph'
 import TrackTrip from './TrackTrip'
+import AvgVelocityTrip from './AvgVelocityTrip'
 import TwoRunners from './TwoRunners'
 import RoundTrip from './RoundTrip'
 import ScenarioLine from './ScenarioLine'
@@ -41,12 +43,14 @@ interface Props {
   step: Step
   lesson: Lesson
   masteryScore?: number
+  /** The learner's previously saved answer for this step, for review on revisit. */
+  saved?: StepState
   onSolved: (correct: boolean, answer: string | number | null, concept?: ConceptId) => void
   onContinue: () => void
   isLast: boolean
 }
 
-export default function StepView({ step, lesson, masteryScore, onSolved, onContinue, isLast }: Props) {
+export default function StepView({ step, lesson, masteryScore, saved, onSolved, onContinue, isLast }: Props) {
   const continueLabel = isLast ? 'Finish lesson' : 'Continue'
 
   switch (step.type) {
@@ -104,9 +108,9 @@ export default function StepView({ step, lesson, masteryScore, onSolved, onConti
     case 'predict':
     case 'mcq':
     case 'recall':
-      return <ChoiceStep step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      return <ChoiceStep step={step} lesson={lesson} masteryScore={masteryScore} saved={saved} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
     case 'numeric':
-      return <NumericStepView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+      return <NumericStepView step={step} lesson={lesson} masteryScore={masteryScore} saved={saved} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
     case 'sim-challenge':
       return (
         <SimChallengeView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
@@ -208,15 +212,17 @@ function hashId(s: string): number {
  * that instead.
  */
 /** Render the specific game a question authored for itself. */
-function renderGame(g: NonNullable<Step['game']>): React.ReactNode {
+function renderGame(g: NonNullable<Step['game']>, quiz = false): React.ReactNode {
   const c = g.config ?? {}
   switch (g.kind) {
     case 'none':
       return null
     case 'motion-graph':
-      return <MotionGraph velocity={c.velocity} />
+      return <MotionGraph velocity={c.velocity} quiz={quiz} />
     case 'track-trip':
       return <TrackTrip velocity={c.velocity} />
+    case 'avg-velocity-trip':
+      return <AvgVelocityTrip distance={c.distance} time={c.time} />
     case 'two-runners':
       return <TwoRunners v1={c.v1} v2={c.v2} />
     case 'round-trip':
@@ -247,7 +253,9 @@ function renderGame(g: NonNullable<Step['game']>): React.ReactNode {
 function QuestionVisual({ step }: { step: Step }) {
   // A question's own authored cannon sim or game always wins (most relevant).
   if ('visual' in step && step.visual) return <SimPlayground config={step.visual} />
-  if (step.game) return renderGame(step.game)
+  // Numeric questions hide any value-revealing readouts in their game (quiz mode),
+  // so the game models the method without handing over the answer.
+  if (step.game) return renderGame(step.game, step.type === 'numeric')
 
   const seed = hashId(step.id)
   // Factory thunks so only the chosen widget is ever constructed.
@@ -299,6 +307,7 @@ function ChoiceStep({
   step,
   lesson,
   masteryScore,
+  saved,
   onSolved,
   onContinue,
   continueLabel,
@@ -306,13 +315,18 @@ function ChoiceStep({
   step: ChoiceStepType
   lesson: Lesson
   masteryScore?: number
+  saved?: StepState
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
 }) {
-  const [selected, setSelected] = useState<string | null>(null)
-  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
-  const [attempts, setAttempts] = useState(0)
+  // Restore a previously chosen answer when the learner revisits this step.
+  const savedChoice = saved?.lastAnswer != null ? String(saved.lastAnswer) : null
+  const [selected, setSelected] = useState<string | null>(savedChoice)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(() =>
+    savedChoice ? checkChoiceAnswer(step, savedChoice) : null,
+  )
+  const [attempts, setAttempts] = useState(saved?.attempts ?? 0)
   const solved = result?.correct ?? false
 
   const check = () => {
@@ -395,6 +409,7 @@ function NumericStepView({
   step,
   lesson,
   masteryScore,
+  saved,
   onSolved,
   onContinue,
   continueLabel,
@@ -402,15 +417,22 @@ function NumericStepView({
   step: Extract<Step, { type: 'numeric' }>
   lesson: Lesson
   masteryScore?: number
+  saved?: StepState
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
 }) {
-  const [value, setValue] = useState('')
-  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
+  // Restore a previously entered answer when the learner revisits this step. A
+  // step is only ever advanced past once solved, so a saved value is correct.
+  const savedNum = typeof saved?.lastAnswer === 'number' ? saved.lastAnswer : null
+  const savedCorrect = savedNum != null && checkNumericAnswer(savedNum, step.answer, step.tolerance)
+  const [value, setValue] = useState(savedNum != null ? String(savedNum) : '')
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(
+    savedCorrect ? { correct: true, message: 'Spot on.' } : null,
+  )
   const [hintIndex, setHintIndex] = useState(0)
-  const [attempts, setAttempts] = useState(0)
-  const [lastNum, setLastNum] = useState<number | null>(null)
+  const [attempts, setAttempts] = useState(saved?.attempts ?? 0)
+  const [lastNum, setLastNum] = useState<number | null>(savedNum)
   const solved = result?.correct ?? false
 
   const check = () => {

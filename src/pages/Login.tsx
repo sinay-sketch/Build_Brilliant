@@ -47,7 +47,7 @@ export default function Login() {
           ✦
         </div>
         <h1 className="mt-3 font-display text-3xl font-semibold text-ink">Brilliant</h1>
-        <p className="mt-1 text-ink-soft">Learn physics by doing. Start with projectile motion.</p>
+        <p className="mt-1 text-ink-soft">Learn physics by doing.</p>
       </div>
 
       {!configured && (

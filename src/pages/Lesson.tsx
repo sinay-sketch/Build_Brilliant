@@ -83,6 +83,17 @@ export default function Lesson() {
     void setCurrentStep(lesson.id, nextIndex)
   }
 
+  const handleBack = () => {
+    if (index === 0) return
+    const prevIndex = index - 1
+    setIndex(prevIndex)
+    void setCurrentStep(lesson.id, prevIndex)
+  }
+
+  // Saved answer for this step (if any), so a revisited question shows the
+  // learner's previous answer instead of a blank re-do.
+  const savedState = progress[lesson.id]?.stepStates?.[step.id]
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-5">
       {/* Progress header */}
@@ -94,6 +105,16 @@ export default function Lesson() {
           aria-label="Back to course"
         >
           ✕
+        </button>
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={index === 0}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-ink-mute transition hover:bg-paper-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink-mute"
+          aria-label="Previous step"
+          title="Previous step"
+        >
+          ←
         </button>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-track">
           <div
@@ -112,6 +133,7 @@ export default function Lesson() {
         <StepView
           step={step}
           lesson={lesson}
+          saved={savedState}
           masteryScore={step.concept ? mastery[step.concept]?.score : undefined}
           onSolved={handleSolved}
           onContinue={handleContinue}
