@@ -143,7 +143,19 @@ limits, persona/pedagogy system prompts). New Firestore: per-concept
 **Turn AI off:** set `VITE_AI_ENABLED=false` (or any per-feature flag) and the
 app runs as the pure Phase 1 experience.
 
-**Test the generation invariant:**
+## Tests
+
+Automated tests (Vitest) cover the deterministic core: the physics engine,
+answer checker, mastery model, streak logic, XP/leveling, and the practice
+generation invariant (every generated problem is engine-correct). They run in
+CI on every push.
+
+```bash
+npm test          # run the suite once
+npm run test:watch # watch mode
+```
+
+A standalone property check of the generator is also available:
 
 ```bash
 npx tsx scripts/verify-generation.ts
