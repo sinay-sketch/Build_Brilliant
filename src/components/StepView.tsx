@@ -17,7 +17,13 @@ import VectorComponents from './VectorComponents'
 import DropRace from './DropRace'
 import MotionGraph from './MotionGraph'
 import TrackTrip from './TrackTrip'
+import TwoRunners from './TwoRunners'
+import RoundTrip from './RoundTrip'
 import DropTower from './DropTower'
+import Stroboscope from './Stroboscope'
+import FeatherHammer from './FeatherHammer'
+import ParabolaTracer from './ParabolaTracer'
+import ComplementaryPair from './ComplementaryPair'
 import RangeAngleCurve from './RangeAngleCurve'
 import GraphTarget from './GraphTarget'
 import DropTarget from './DropTarget'
@@ -209,6 +215,7 @@ function QuestionVisual({ step }: { step: Step }) {
   const speed = [16, 18, 20, 22, 24][(seed >> 2) % 5]
   const vel = [3, 4, 6, 7, 9, -4][seed % 6]
   const height = [25, 35, 45, 60][(seed >> 1) % 4]
+  const v2 = -(2 + (seed % 5))
   const sim = (a: number, s: number) => (
     <SimPlayground config={{ angleDeg: a, speed: s, gravity: 9.8, editable: ['angle', 'speed'] }} />
   )
@@ -218,22 +225,28 @@ function QuestionVisual({ step }: { step: Step }) {
     case 'avg-velocity':
     case 'displacement':
     case 'speed-vs-velocity':
-      return pick([() => <MotionGraph velocity={vel} />, () => <TrackTrip velocity={vel} />])
+      return pick([
+        () => <MotionGraph velocity={vel} />,
+        () => <TrackTrip velocity={vel} />,
+        () => <TwoRunners v1={Math.max(2, Math.abs(vel))} v2={v2} />,
+        () => <RoundTrip speed={Math.max(4, Math.abs(vel))} />,
+      ])
     case 'gravity-accel':
     case 'fall-distance':
-      return pick([() => <DropTower height={height} />, () => <DropRace speed={speed} />])
+      return pick([() => <DropTower height={height} />, () => <Stroboscope height={height} />, () => <DropRace speed={speed} />])
     case 'free-fall-rate':
-      return pick([() => <DropRace speed={speed} />, () => <DropTower height={height} />])
+      return pick([() => <FeatherHammer />, () => <DropRace speed={speed} />, () => <Stroboscope height={height} />])
     case 'gravity-independence':
-      return pick([() => <DropRace speed={speed} />, () => sim(angle, speed)])
+      return pick([() => <DropRace speed={speed} />, () => <ParabolaTracer angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
     case 'components':
-      return pick([() => <VectorComponents angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
+      return pick([() => <VectorComponents angleDeg={angle} speed={speed} />, () => <ParabolaTracer angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
     case 'trajectory-shape':
-      return pick([() => sim(angle, speed), () => <DropTower height={height} />])
+      return pick([() => <ParabolaTracer angleDeg={angle} speed={speed} />, () => sim(angle, speed), () => <DropTower height={height} />])
     case 'angle-range':
     case 'range-reasoning':
+      return pick([() => <RangeAngleCurve angleDeg={angle} speed={speed} />, () => sim(angle, speed), () => <ComplementaryPair angleDeg={angle} speed={speed} />])
     case 'complementary-angles':
-      return pick([() => <RangeAngleCurve angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
+      return pick([() => <ComplementaryPair angleDeg={angle} speed={speed} />, () => <RangeAngleCurve angleDeg={angle} speed={speed} />])
     default:
       return null
   }
