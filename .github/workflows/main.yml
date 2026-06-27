@@ -1,0 +1,26 @@
+# GitHub Actions CI for Build Brilliant.
+#
+# To enable: copy this file to .github/workflows/ci.yml and commit it.
+# (Pushing a workflow file requires a GitHub token with the `workflow` scope,
+#  or you can add it directly through the GitHub web UI: Actions -> new workflow.)
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
