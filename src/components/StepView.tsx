@@ -183,6 +183,40 @@ function PrimaryButton({
   )
 }
 
+/**
+ * Every graded question gets a relevant interactive model to think with. If the
+ * step authored its own projectile sim we use that; otherwise we pick a widget
+ * by concept (a position-time grapher for velocity questions, a drop tower for
+ * free fall, a range curve for angle questions, and so on). This guarantees no
+ * question is just plain text and choices.
+ */
+function QuestionVisual({ step }: { step: Step }) {
+  if ('visual' in step && step.visual) return <SimPlayground config={step.visual} />
+  switch (step.concept) {
+    case 'velocity-graph':
+    case 'avg-velocity':
+    case 'displacement':
+    case 'speed-vs-velocity':
+      return <MotionGraph />
+    case 'gravity-accel':
+    case 'fall-distance':
+      return <DropTower />
+    case 'free-fall-rate':
+    case 'gravity-independence':
+      return <DropRace />
+    case 'components':
+      return <VectorComponents />
+    case 'trajectory-shape':
+      return <SimPlayground config={{ angleDeg: 45, speed: 20, gravity: 9.8, editable: ['angle', 'speed'] }} />
+    case 'angle-range':
+    case 'range-reasoning':
+    case 'complementary-angles':
+      return <RangeAngleCurve />
+    default:
+      return null
+  }
+}
+
 type ChoiceStepType = Extract<Step, { type: 'predict' | 'mcq' | 'recall' }>
 
 function ChoiceStep({
@@ -204,7 +238,6 @@ function ChoiceStep({
   const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
   const [attempts, setAttempts] = useState(0)
   const solved = result?.correct ?? false
-  const hasVisual = step.type !== 'recall' && step.visual
 
   const check = () => {
     if (!selected) return
@@ -217,7 +250,7 @@ function ChoiceStep({
   return (
     <div className="space-y-4">
       <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
-      {hasVisual && <SimPlayground config={step.visual!} />}
+      <QuestionVisual step={step} />
       <div className="space-y-2.5">
         {step.choices.map((c) => {
           const isSel = selected === c.id
@@ -323,7 +356,7 @@ function NumericStepView({
   return (
     <div className="space-y-4">
       <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
-      {step.visual && <SimPlayground config={step.visual} />}
+      <QuestionVisual step={step} />
       <div className="flex items-center gap-2">
         <input
           type="number"
