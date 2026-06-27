@@ -19,6 +19,8 @@ import MotionGraph from './MotionGraph'
 import TrackTrip from './TrackTrip'
 import TwoRunners from './TwoRunners'
 import RoundTrip from './RoundTrip'
+import ScenarioLine from './ScenarioLine'
+import LineGraph from './LineGraph'
 import DropTower from './DropTower'
 import Stroboscope from './Stroboscope'
 import FeatherHammer from './FeatherHammer'
@@ -209,6 +211,8 @@ function hashId(s: string): number {
 function renderGame(g: NonNullable<Step['game']>): React.ReactNode {
   const c = g.config ?? {}
   switch (g.kind) {
+    case 'none':
+      return null
     case 'motion-graph':
       return <MotionGraph velocity={c.velocity} />
     case 'track-trip':
@@ -217,6 +221,10 @@ function renderGame(g: NonNullable<Step['game']>): React.ReactNode {
       return <TwoRunners v1={c.v1} v2={c.v2} />
     case 'round-trip':
       return <RoundTrip speed={c.speed} />
+    case 'scenario-line':
+      return <ScenarioLine legs={c.legs} />
+    case 'line-graph':
+      return <LineGraph distance={c.distance} time={c.time} />
     case 'drop-tower':
       return <DropTower height={c.height} />
     case 'drop-race':

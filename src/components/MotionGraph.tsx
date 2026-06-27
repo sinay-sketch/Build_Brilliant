@@ -107,6 +107,17 @@ export default function MotionGraph({ velocity = 4 }: Props) {
         ctx.fillText(`${t}s`, sx(t), Hpx - padB + 13)
       }
 
+      // axis labels
+      ctx.fillStyle = COLORS.text
+      ctx.font = '10px Inter, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('time (s)', padL + (W - padL - padR) / 2, Hpx - 3)
+      ctx.save()
+      ctx.translate(9, padT + (Hpx - padT - padB) / 2)
+      ctx.rotate(-Math.PI / 2)
+      ctx.fillText('position (m)', 0, 0)
+      ctx.restore()
+
       // full faint line for the chosen velocity
       ctx.strokeStyle = COLORS.lineFaint
       ctx.lineWidth = 2

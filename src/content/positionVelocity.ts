@@ -123,7 +123,7 @@ export const positionVelocityLesson: Lesson = {
       },
       explanation: 'A velocity must state a direction. "30 m/s east" qualifies; "30 m/s" alone is only speed.',
       takeaway: 'No direction stated → it is speed, not velocity.',
-      game: { kind: 'two-runners', config: { v1: 5, v2: -5 } },
+      game: { kind: 'none' },
     },
 
     // ---------------- BUILD: distance vs displacement ----------------
@@ -159,7 +159,7 @@ export const positionVelocityLesson: Lesson = {
       },
       explanation: 'Displacement = 5 m east − 2 m west = 3 m east. Distance walked was 7 m, but net position changed by 3 m east.',
       takeaway: 'Displacement is net change in position, not total ground covered.',
-      game: { kind: 'two-runners', config: { v1: 5, v2: -2 } },
+      game: { kind: 'scenario-line', config: { legs: [5, -2] } },
     },
 
     // ---------------- BUILD: average velocity ----------------
@@ -198,7 +198,7 @@ export const positionVelocityLesson: Lesson = {
       explanation: 'v_avg = Δx / Δt = 100 m / 20 s = 5 m/s.',
       solution: ['Write v_avg = Δx / Δt.', 'v_avg = 100 / 20.', '= 5 m/s.'],
       takeaway: 'Average velocity = displacement ÷ time.',
-      game: { kind: 'track-trip', config: { velocity: 5 } },
+      game: { kind: 'scenario-line', config: { legs: [100] } },
     },
 
     // ---------------- BUILD: velocity from a graph ----------------
@@ -281,7 +281,7 @@ export const positionVelocityLesson: Lesson = {
       explanation: 'v_avg = 240 / 30 = 8 m/s.',
       solution: ['v_avg = Δx / Δt = 240 / 30.', '= 8 m/s.'],
       takeaway: 'Same formula, any numbers.',
-      game: { kind: 'track-trip', config: { velocity: 8 } },
+      game: { kind: 'scenario-line', config: { legs: [240] } },
     },
     {
       id: 'pv-graph-practice',
@@ -312,7 +312,7 @@ export const positionVelocityLesson: Lesson = {
       explanation: 'v = (70 − 10) / 4 = 60 / 4 = 15 m/s.',
       solution: ['Rise = 70 − 10 = 60 m.', 'v = 60 / 4.', '= 15 m/s.'],
       takeaway: 'Always subtract the starting position first.',
-      game: { kind: 'motion-graph', config: { velocity: 15 } },
+      game: { kind: 'none' },
     },
     {
       id: 'pv-graph-target-2',
@@ -329,17 +329,19 @@ export const positionVelocityLesson: Lesson = {
     },
     {
       id: 'pv-plot-1',
-      type: 'plot-position',
+      type: 'numeric',
       phase: 'practice',
       concept: 'displacement',
-      prompt: 'An object starts at 0 and moves at 7 m/s. Drag the marker to where it is after 5 seconds.',
-      velocity: 7,
-      time: 5,
-      tolerance: 2,
-      max: 50,
+      prompt: 'An object starts at 0 and moves at 7 m/s. How far from the start is it after 5 seconds?',
+      answer: 35,
+      unit: 'm',
+      tolerance: 0.5,
+      min: 0,
+      max: 100,
       hints: ['Position covered = velocity × time.', '7 × 5 is where it ends up.'],
-      explanation: 'Distance covered = v·t = 7 × 5 = 35 m, so the object sits at the 35 m mark.',
+      explanation: 'Distance covered = v·t = 7 × 5 = 35 m.',
       takeaway: 'At constant velocity, position = v · t.',
+      game: { kind: 'none' },
     },
     {
       id: 'pv-roundtrip',
@@ -362,7 +364,7 @@ export const positionVelocityLesson: Lesson = {
       explanation:
         'Displacement for a full lap is 0 (start = finish), so average velocity = 0 / 80 = 0 m/s. Average speed, by contrast, is 400 / 80 = 5 m/s.',
       takeaway: 'Round trip: average velocity is zero, even though you moved.',
-      game: { kind: 'round-trip', config: { speed: 5 } },
+      game: { kind: 'none' },
     },
     {
       id: 'pv-zero-velocity-concept',
@@ -392,7 +394,7 @@ export const positionVelocityLesson: Lesson = {
       explanation: 'v_avg = 1500 / 60 = 25 m/s east.',
       solution: ['v_avg = 1500 / 60.', '= 25 m/s (east).'],
       takeaway: 'Direction (east) rides along with the number.',
-      game: { kind: 'motion-graph', config: { velocity: 25 } },
+      game: { kind: 'line-graph', config: { distance: 1500, time: 60 } },
     },
 
     {
@@ -421,7 +423,7 @@ export const positionVelocityLesson: Lesson = {
       correctId: 'dir',
       explanation: 'Velocity is speed plus a direction. Same units (m/s), but velocity points somewhere.',
       takeaway: 'Velocity = speed + direction.',
-      game: { kind: 'two-runners', config: { v1: 6, v2: -6 } },
+      game: { kind: 'none' },
     },
     {
       id: 'pv-recall-2',
@@ -437,7 +439,7 @@ export const positionVelocityLesson: Lesson = {
       correctId: 'disp',
       explanation: 'Average velocity = displacement ÷ time. Using distance instead would give average speed.',
       takeaway: 'It is displacement over time — direction included.',
-      game: { kind: 'track-trip', config: { velocity: 6 } },
+      game: { kind: 'none' },
     },
     {
       id: 'pv-synthesis',

@@ -67,10 +67,13 @@ export interface SimConfig {
  * (Projectile cannon visuals can also use the richer `visual?: SimConfig`.)
  */
 export type GameKind =
+  | 'none'
   | 'motion-graph'
   | 'track-trip'
   | 'two-runners'
   | 'round-trip'
+  | 'scenario-line'
+  | 'line-graph'
   | 'drop-tower'
   | 'drop-race'
   | 'stroboscope'
@@ -81,6 +84,7 @@ export type GameKind =
   | 'complementary-pair'
 
 export interface GameSpec {
+  /** Use 'none' to explicitly show NO visualization for a question. */
   kind: GameKind
   /** Starting values; ideally mirror the numbers in the question prompt. */
   config?: {
@@ -90,6 +94,11 @@ export interface GameSpec {
     speed?: number
     height?: number
     angleDeg?: number
+    /** For 'scenario-line': signed legs of a walk in meters (east +, west −). */
+    legs?: number[]
+    /** For 'line-graph': total distance (m) and time (s) to plot to scale. */
+    distance?: number
+    time?: number
   }
 }
 

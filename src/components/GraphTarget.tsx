@@ -62,6 +62,14 @@ export default function GraphTarget({ target, startV, onValue, revealed, correct
           {/* baseline */}
           <line x1={PAD_L} y1={sy(0)} x2={VB_W - PAD_R} y2={sy(0)} stroke="#bd9e6a" strokeWidth="1.5" />
 
+          {/* axis labels */}
+          <text x={(PAD_L + VB_W - PAD_R) / 2} y={VB_H - 2} fontSize="9" textAnchor="middle" fill="var(--color-ink-soft)" fontWeight="600">
+            time (s)
+          </text>
+          <text x={9} y={(PAD_T + VB_H - PAD_B) / 2} fontSize="9" textAnchor="middle" fill="var(--color-ink-soft)" fontWeight="600" transform={`rotate(-90 9 ${(PAD_T + VB_H - PAD_B) / 2})`}>
+            position (m)
+          </text>
+
           {/* target point */}
           <line x1={sx(target.t)} y1={sy(target.x)} x2={sx(target.t)} y2={sy(0)} stroke="rgba(33,28,22,0.2)" strokeDasharray="3 3" />
           <line x1={PAD_L} y1={sy(target.x)} x2={sx(target.t)} y2={sy(target.x)} stroke="rgba(33,28,22,0.2)" strokeDasharray="3 3" />
