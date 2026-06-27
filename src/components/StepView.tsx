@@ -16,6 +16,7 @@ import SimPlayground from './SimPlayground'
 import VectorComponents from './VectorComponents'
 import DropRace from './DropRace'
 import MotionGraph from './MotionGraph'
+import TrackTrip from './TrackTrip'
 import DropTower from './DropTower'
 import RangeAngleCurve from './RangeAngleCurve'
 import GraphTarget from './GraphTarget'
@@ -183,35 +184,56 @@ function PrimaryButton({
   )
 }
 
+/** Stable hash of a step id, so each question deterministically gets its own
+ *  widget + parameters (varied across questions, consistent on re-renders). */
+function hashId(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
 /**
- * Every graded question gets a relevant interactive model to think with. If the
- * step authored its own projectile sim we use that; otherwise we pick a widget
- * by concept (a position-time grapher for velocity questions, a drop tower for
- * free fall, a range curve for angle questions, and so on). This guarantees no
- * question is just plain text and choices.
+ * Every graded question gets a relevant interactive model to think with. To
+ * keep it from feeling repetitive, each concept maps to a POOL of different
+ * widgets, and the choice (plus its starting parameters) is varied per question
+ * by hashing the step id. If the step authored its own projectile sim, we honor
+ * that instead.
  */
 function QuestionVisual({ step }: { step: Step }) {
   if ('visual' in step && step.visual) return <SimPlayground config={step.visual} />
+
+  const seed = hashId(step.id)
+  // Factory thunks so only the chosen widget is ever constructed.
+  const pick = (arr: Array<() => React.ReactNode>): React.ReactNode => arr[seed % arr.length]()
+  const angle = [25, 30, 35, 40, 50, 55][seed % 6]
+  const speed = [16, 18, 20, 22, 24][(seed >> 2) % 5]
+  const vel = [3, 4, 6, 7, 9, -4][seed % 6]
+  const height = [25, 35, 45, 60][(seed >> 1) % 4]
+  const sim = (a: number, s: number) => (
+    <SimPlayground config={{ angleDeg: a, speed: s, gravity: 9.8, editable: ['angle', 'speed'] }} />
+  )
+
   switch (step.concept) {
     case 'velocity-graph':
     case 'avg-velocity':
     case 'displacement':
     case 'speed-vs-velocity':
-      return <MotionGraph />
+      return pick([() => <MotionGraph velocity={vel} />, () => <TrackTrip velocity={vel} />])
     case 'gravity-accel':
     case 'fall-distance':
-      return <DropTower />
+      return pick([() => <DropTower height={height} />, () => <DropRace speed={speed} />])
     case 'free-fall-rate':
+      return pick([() => <DropRace speed={speed} />, () => <DropTower height={height} />])
     case 'gravity-independence':
-      return <DropRace />
+      return pick([() => <DropRace speed={speed} />, () => sim(angle, speed)])
     case 'components':
-      return <VectorComponents />
+      return pick([() => <VectorComponents angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
     case 'trajectory-shape':
-      return <SimPlayground config={{ angleDeg: 45, speed: 20, gravity: 9.8, editable: ['angle', 'speed'] }} />
+      return pick([() => sim(angle, speed), () => <DropTower height={height} />])
     case 'angle-range':
     case 'range-reasoning':
     case 'complementary-angles':
-      return <RangeAngleCurve />
+      return pick([() => <RangeAngleCurve angleDeg={angle} speed={speed} />, () => sim(angle, speed)])
     default:
       return null
   }
