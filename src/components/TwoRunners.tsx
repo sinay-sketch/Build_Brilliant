@@ -40,9 +40,9 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /**
- * Speed vs. velocity, made literal. Each car has a SPEED (its own magnitude
+ * Speed vs. velocity, made literal. Each runner has a SPEED (its own magnitude
  * slider) and a DIRECTION (East/West toggle) — the two halves of velocity kept
- * as deliberately separate controls. Give two cars the same speed but opposite
+ * as deliberately separate controls. Give two runners the same speed but opposite
  * directions and watch them finish at opposite places: same speed, different
  * velocity. Live panels call out whether the speeds match and whether the
  * velocities match, so the distinction the lesson is teaching is on screen.
@@ -59,8 +59,6 @@ export default function TwoRunners({ v1 = 6, v2 = -6 }: Props) {
 
   const velA = speedA * dirA
   const velB = speedB * dirB
-  const sameSpeed = speedA === speedB
-  const sameVelocity = velA === velB
 
   const params = useRef({ velA, velB, dirA, dirB, phase })
   params.current = { velA, velB, dirA, dirB, phase }
@@ -72,13 +70,6 @@ export default function TwoRunners({ v1 = 6, v2 = -6 }: Props) {
   const go = () => {
     startRef.current = performance.now()
     setPhase('running')
-  }
-  const matchQuestion = () => {
-    setSpeedA(10)
-    setSpeedB(10)
-    setDirA(1)
-    setDirB(-1)
-    reset()
   }
 
   useEffect(() => {
@@ -98,38 +89,44 @@ export default function TwoRunners({ v1 = 6, v2 = -6 }: Props) {
     resize()
     window.addEventListener('resize', resize)
 
-    const drawCar = (cx: number, cy: number, dir: Dir, color: string) => {
+    const drawRunner = (cx: number, cy: number, dir: Dir, color: string) => {
       ctx.save()
       ctx.translate(cx, cy)
-      ctx.scale(dir, 1) // flip so the car faces its travel direction
+      ctx.scale(dir, 1) // flip so the runner faces its travel direction
       // ground shadow
       ctx.fillStyle = 'rgba(33,28,22,0.16)'
       ctx.beginPath()
-      ctx.ellipse(0, 9, 16, 3, 0, 0, Math.PI * 2)
+      ctx.ellipse(0, 10, 9, 2.5, 0, 0, Math.PI * 2)
       ctx.fill()
-      // body + cabin
+      // legs mid-stride
+      ctx.strokeStyle = color
+      ctx.lineWidth = 3
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(0, 2)
+      ctx.lineTo(6, 9)
+      ctx.moveTo(0, 2)
+      ctx.lineTo(-5, 9)
+      ctx.stroke()
+      // torso leaning into the run
+      ctx.beginPath()
+      ctx.moveTo(0, 2)
+      ctx.lineTo(2, -7)
+      ctx.stroke()
+      // forward arm
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(1, -4)
+      ctx.lineTo(7, -3)
+      ctx.stroke()
+      // head
       ctx.fillStyle = color
-      roundRect(ctx, -16, -6, 32, 12, 4)
-      ctx.fill()
-      roundRect(ctx, -7, -12, 14, 8, 3)
-      ctx.fill()
-      // window
-      ctx.fillStyle = 'rgba(255,255,255,0.65)'
-      roundRect(ctx, -4, -10, 9, 5, 2)
-      ctx.fill()
-      // wheels
-      ctx.fillStyle = '#211c16'
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 1.5
       ctx.beginPath()
-      ctx.arc(-9, 6, 3.5, 0, Math.PI * 2)
+      ctx.arc(3, -11, 3.5, 0, Math.PI * 2)
       ctx.fill()
-      ctx.beginPath()
-      ctx.arc(9, 6, 3.5, 0, Math.PI * 2)
-      ctx.fill()
-      // headlight at the front
-      ctx.fillStyle = '#fff3c4'
-      ctx.beginPath()
-      ctx.arc(15, 1, 1.8, 0, Math.PI * 2)
-      ctx.fill()
+      ctx.stroke()
       ctx.restore()
     }
 
@@ -215,13 +212,13 @@ export default function TwoRunners({ v1 = 6, v2 = -6 }: Props) {
       drawTrail(rowA, xA, COLORS.aTrail)
       drawTrail(rowB, xB, COLORS.bTrail)
 
-      // cars (face chosen direction even when parked at speed 0)
+      // runners (face chosen direction even when standing still at speed 0)
       const faceA: Dir = p.velA !== 0 ? (p.velA < 0 ? -1 : 1) : p.dirA
       const faceB: Dir = p.velB !== 0 ? (p.velB < 0 ? -1 : 1) : p.dirB
-      drawCar(sx(xA), rowA, faceA, COLORS.a)
-      drawCar(sx(xB), rowB, faceB, COLORS.b)
+      drawRunner(sx(xA), rowA, faceA, COLORS.a)
+      drawRunner(sx(xB), rowB, faceB, COLORS.b)
 
-      // live position above each car
+      // live position above each runner
       const drawPos = (rowY: number, x: number, color: string) => {
         ctx.fillStyle = color
         ctx.font = '700 11px Inter, sans-serif'
@@ -252,49 +249,27 @@ export default function TwoRunners({ v1 = 6, v2 = -6 }: Props) {
     return () => cancelAnimationFrame(raf)
   }, [phase])
 
-  const insight =
-    speedA === 0 && speedB === 0
-      ? 'Both cars are at rest — velocity is 0 for each.'
-      : sameSpeed && !sameVelocity
-        ? 'Same speed, different velocity — direction is the only difference.'
-        : !sameSpeed && !sameVelocity
-          ? 'Different speeds, so different velocities too.'
-          : 'Same speed and same direction — identical velocity.'
-
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="h-56 w-full">
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       </div>
 
-      {/* Velocity readout — the heart of the question */}
+      {/* Each runner's velocity. The answer-stating verdict line ("+8 ≠ −8 ·
+          different velocity") is intentionally omitted so the game shows the data
+          without giving the answer away — the explanation supplies the verdict. */}
       <div className="border-y border-line bg-surface-2 p-2.5">
         <ReadoutCard label="Velocity — speed + direction">
-          <Row color={COLORS.a} name="Car A" value={`${signed(velA)} m/s ${speedA === 0 ? '' : dirArrow(dirA)}`} />
-          <Row color={COLORS.b} name="Car B" value={`${signed(velB)} m/s ${speedB === 0 ? '' : dirArrow(dirB)}`} />
-          <Verdict
-            same={sameVelocity}
-            text={`${signed(velA)} ${sameVelocity ? '=' : '≠'} ${signed(velB)} · ${sameVelocity ? 'same velocity' : 'different velocity'}`}
-          />
+          <Row color={COLORS.a} name="Runner A" value={`${signed(velA)} m/s ${speedA === 0 ? '' : dirArrow(dirA)}`} />
+          <Row color={COLORS.b} name="Runner B" value={`${signed(velB)} m/s ${speedB === 0 ? '' : dirArrow(dirB)}`} />
         </ReadoutCard>
       </div>
 
-      <p className="border-b border-line bg-brand-tint/60 px-3 py-2 text-center text-xs font-medium text-ink-soft">
-        {insight}
-      </p>
-
       {/* Controls: speed magnitude and direction kept separate on purpose */}
       <div className="space-y-3 p-3">
-        <Lane name="Car A" color={COLORS.a} speed={speedA} dir={dirA} dirLabel={dirWord(speedA, dirA)} onSpeed={(v) => { setSpeedA(v); reset() }} onDir={(d) => { setDirA(d); reset() }} />
-        <Lane name="Car B" color={COLORS.b} speed={speedB} dir={dirB} dirLabel={dirWord(speedB, dirB)} onSpeed={(v) => { setSpeedB(v); reset() }} onDir={(d) => { setDirB(d); reset() }} />
+        <Lane name="Runner A" color={COLORS.a} speed={speedA} dir={dirA} dirLabel={dirWord(speedA, dirA)} onSpeed={(v) => { setSpeedA(v); reset() }} onDir={(d) => { setDirA(d); reset() }} />
+        <Lane name="Runner B" color={COLORS.b} speed={speedB} dir={dirB} dirLabel={dirWord(speedB, dirB)} onSpeed={(v) => { setSpeedB(v); reset() }} onDir={(d) => { setDirB(d); reset() }} />
 
-        <button
-          type="button"
-          onClick={matchQuestion}
-          className="w-full rounded-xl border border-brand/40 bg-brand-tint py-2 text-sm font-semibold text-brand-strong transition hover:bg-brand-soft"
-        >
-          Match the question: same speed, opposite directions
-        </button>
         <div className="flex gap-2">
           <button
             type="button"
@@ -334,18 +309,6 @@ function Row({ color, name, value }: { color: string; name: string; value: strin
       </span>
       <span className="font-mono text-ink">{value}</span>
     </div>
-  )
-}
-
-function Verdict({ same, text }: { same: boolean; text: string }) {
-  return (
-    <p
-      className={`mt-1.5 rounded-lg px-2 py-1 text-center text-xs font-semibold ${
-        same ? 'bg-paper-2 text-ink-soft' : 'bg-brand-tint text-brand-strong'
-      }`}
-    >
-      {text}
-    </p>
   )
 }
 

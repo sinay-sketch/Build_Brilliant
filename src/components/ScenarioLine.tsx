@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 interface Props {
   /** Signed legs of the walk in meters: positive = east/right, negative = west/left. */
   legs?: number[]
+  /** When false (a graded question not yet answered), hide the distance/displacement readout so the game doesn't reveal the answer. Defaults to revealed. */
+  revealed?: boolean
 }
 
 const COLORS = {
@@ -22,7 +24,7 @@ const COLORS = {
  * show total distance travelled vs net displacement. Lets the learner picture a
  * "5 m east then 2 m west" scenario directly on a number line.
  */
-export default function ScenarioLine({ legs = [5, -2] }: Props) {
+export default function ScenarioLine({ legs = [5, -2], revealed = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle')
   const [readout, setReadout] = useState({ dist: 0, disp: 0 })
@@ -167,16 +169,18 @@ export default function ScenarioLine({ legs = [5, -2] }: Props) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       </div>
 
-      <div className="grid grid-cols-2 divide-x divide-line border-y border-line bg-surface-2 text-center">
-        <div className="px-2 py-2">
-          <p className="font-display text-base font-semibold text-ink">{Math.round(readout.dist)} m</p>
-          <p className="text-[10px] text-ink-soft">Distance travelled</p>
+      {revealed && (
+        <div className="grid grid-cols-2 divide-x divide-line border-y border-line bg-surface-2 text-center">
+          <div className="px-2 py-2">
+            <p className="font-display text-base font-semibold text-ink">{Math.round(readout.dist)} m</p>
+            <p className="text-[10px] text-ink-soft">Distance travelled</p>
+          </div>
+          <div className="px-2 py-2">
+            <p className="font-display text-base font-semibold text-ink">{Math.round(readout.disp)} m</p>
+            <p className="text-[10px] text-ink-soft">Displacement (from start)</p>
+          </div>
         </div>
-        <div className="px-2 py-2">
-          <p className="font-display text-base font-semibold text-ink">{Math.round(readout.disp)} m</p>
-          <p className="text-[10px] text-ink-soft">Displacement (from start)</p>
-        </div>
-      </div>
+      )}
 
       <div className="flex gap-2 p-3">
         <button type="button" onClick={go} disabled={phase === 'running'} className="btn-primary flex-1 py-2.5">

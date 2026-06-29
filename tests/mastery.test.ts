@@ -24,12 +24,12 @@ describe('updateMastery', () => {
     expect(masteryLevel(m)).toBe('mastered')
   })
 
-  it('roughly halves the score on a wrong answer', () => {
+  it('pulls the score back to 60% on a wrong answer (a recoverable setback)', () => {
     let m = updateMastery(undefined, true)
     for (let i = 0; i < 3; i++) m = updateMastery(m, true)
     const before = m.score
     m = updateMastery(m, false)
-    expect(m.score).toBeCloseTo(before * 0.5, 5)
+    expect(m.score).toBeCloseTo(before * 0.6, 5)
   })
 
   it('treats an unattempted concept as new', () => {

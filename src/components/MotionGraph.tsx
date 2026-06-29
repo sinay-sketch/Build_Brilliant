@@ -8,6 +8,8 @@ interface Props {
    * reveal the answer when it accompanies a "read the velocity" question.
    */
   quiz?: boolean
+  /** When false (a graded predict/mcq not yet answered), hide the velocity readout + controls so the game doesn't reveal the answer. Defaults to revealed. */
+  revealed?: boolean
 }
 
 const T_MAX = 5 // seconds shown on the graph
@@ -48,7 +50,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
  * rise/run triangle is drawn on the line so "velocity = slope = Δx / Δt" is
  * something you watch form, not memorize. Steeper = faster, downhill = backward.
  */
-export default function MotionGraph({ velocity = 4, quiz = false }: Props) {
+export default function MotionGraph({ velocity = 4, quiz = false, revealed = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [v, setV] = useState(velocity)
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle')
@@ -303,7 +305,7 @@ export default function MotionGraph({ velocity = 4, quiz = false }: Props) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       </div>
 
-      {!quiz && (
+      {!quiz && revealed && (
         <>
           <div className="space-y-1 border-y border-line bg-surface-2 px-3 py-2 text-center text-sm">
             <p>

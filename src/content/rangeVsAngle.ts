@@ -49,7 +49,7 @@ export const rangeVsAngleLesson: Lesson = {
       explanation:
         'Neither extreme wins here: 20° and 70° are complementary (they sum to 90°), so they produce the same range. One is fast and flat, the other slow and high.',
       takeaway: 'Angles that sum to 90° land at the same distance.',
-      game: { kind: 'complementary-pair', config: { angleDeg: 20, speed: 22 } },
+      game: { kind: 'complementary-pair', config: { angleDeg: 20, angle2Deg: 70, speed: 22, independent: true } },
     },
 
     // ---------------- EXPLORE ----------------

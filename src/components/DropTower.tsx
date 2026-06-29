@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   height?: number
+  /** On a graded question, hide ONLY this readout's value (the quantity being solved for); the other two stay as given context. */
+  hideReadout?: 'time' | 'speed' | 'distance'
 }
 
 const PLAYBACK = 0.55 // slow it down so the speed-up is visible
@@ -28,7 +30,7 @@ const BODIES: Body[] = [
  * further apart as it accelerates. Toggle Earth/Moon gravity to feel how g
  * changes everything. No cannon in sight.
  */
-export default function DropTower({ height = 45 }: Props) {
+export default function DropTower({ height = 45, hideReadout }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [bodyIdx, setBodyIdx] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle')
@@ -150,9 +152,9 @@ export default function DropTower({ height = 45 }: Props) {
       </div>
 
       <div className="grid grid-cols-3 divide-x divide-line border-y border-line bg-surface-2 text-center">
-        <Readout label="Time" value={`${readout.t.toFixed(1)} s`} />
-        <Readout label="Speed (v = g·t)" value={`${readout.v.toFixed(1)} m/s`} />
-        <Readout label="Fallen (½g·t²)" value={`${readout.d.toFixed(1)} m`} />
+        <Readout label="Time" value={`${readout.t.toFixed(1)} s`} hidden={hideReadout === 'time'} />
+        <Readout label="Speed (v = g·t)" value={`${readout.v.toFixed(1)} m/s`} hidden={hideReadout === 'speed'} />
+        <Readout label="Fallen (½g·t²)" value={`${readout.d.toFixed(1)} m`} hidden={hideReadout === 'distance'} />
       </div>
 
       <div className="space-y-3 p-3">
@@ -188,10 +190,12 @@ export default function DropTower({ height = 45 }: Props) {
   )
 }
 
-function Readout({ label, value }: { label: string; value: string }) {
+function Readout({ label, value, hidden }: { label: string; value: string; hidden?: boolean }) {
   return (
     <div className="px-2 py-2">
-      <p className="font-display text-base font-semibold text-ink">{value}</p>
+      <p className={`font-display text-base font-semibold ${hidden ? 'text-ink-mute' : 'text-ink'}`}>
+        {hidden ? '?' : value}
+      </p>
       <p className="text-[10px] leading-tight text-ink-soft">{label}</p>
     </div>
   )

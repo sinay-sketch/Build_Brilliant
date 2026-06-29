@@ -4,6 +4,9 @@ import { computeKinematics, trajectoryPoints } from '../lib/physics'
 interface Props {
   angleDeg?: number
   speed?: number
+  /** Independent mode: the gold ball gets its OWN adjustable angle (not the locked complement), and the speed slider is removed (speed fixed). */
+  angle2Deg?: number
+  independent?: boolean
 }
 
 const G = 9.8
@@ -27,14 +30,15 @@ const COLORS = {
  * air yet land at the exact same spot — complementary angles share a range. The
  * green marker shows that shared landing point. At θ = 45° the two arcs coincide.
  */
-export default function ComplementaryPair({ angleDeg = 30, speed = 22 }: Props) {
+export default function ComplementaryPair({ angleDeg = 30, speed = 22, angle2Deg = 60, independent = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [angle, setAngle] = useState(angleDeg)
+  const [angleB, setAngleB] = useState(angle2Deg)
   const [v, setV] = useState(speed)
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle')
   const startRef = useRef<number | null>(null)
-  const params = useRef({ angle, v, phase })
-  params.current = { angle, v, phase }
+  const params = useRef({ angle, angleB, v, independent, phase })
+  params.current = { angle, angleB, v, independent, phase }
 
   const fire = () => {
     startRef.current = performance.now()
@@ -72,15 +76,16 @@ export default function ComplementaryPair({ angleDeg = 30, speed = 22 }: Props) 
       const padT = 16
       const padB = 22
 
-      const comp = 90 - p.angle
+      const comp = p.independent ? p.angleB : 90 - p.angle
       const kFlat = computeKinematics(p.angle, p.v, G)
       const kHigh = computeKinematics(comp, p.v, G)
-      const range = kFlat.range
+      const rangeA = kFlat.range
+      const rangeB = kHigh.range
       const tofMax = Math.max(kFlat.timeOfFlight, kHigh.timeOfFlight)
       const peak = Math.max(kFlat.maxHeight, kHigh.maxHeight)
 
       // world → canvas (independent x/y fit so both arcs use the full panel)
-      const worldW = Math.max(range, 1)
+      const worldW = Math.max(rangeA, rangeB, 1)
       const worldH = Math.max(peak, 1)
       const sx = (x: number) => padL + (x / worldW) * (W - padL - padR)
       const sy = (y: number) => Hpx - padB - (y / worldH) * (Hpx - padT - padB)
@@ -121,25 +126,45 @@ export default function ComplementaryPair({ angleDeg = 30, speed = 22 }: Props) 
       arc(p.angle, COLORS.flat)
       arc(comp, COLORS.high)
 
-      // shared landing marker (green) on the ground
-      const lx = sx(range)
+      // landing markers: a green "same range" flag when the two ranges match
+      // (always, in complement mode; only for complementary pairs in independent
+      // mode), otherwise a small tick under each ball's own landing spot.
       const gy = Hpx - padB
-      ctx.fillStyle = COLORS.target
-      ctx.beginPath()
-      ctx.moveTo(lx, gy - 14)
-      ctx.lineTo(lx + 5, gy - 22)
-      ctx.lineTo(lx, gy - 22)
-      ctx.closePath()
-      ctx.fill()
-      ctx.strokeStyle = COLORS.target
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(lx, gy)
-      ctx.lineTo(lx, gy - 22)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.arc(lx, gy, 4, 0, Math.PI * 2)
-      ctx.fill()
+      const tie = Math.abs(rangeA - rangeB) < Math.max(0.4, worldW * 0.015)
+      if (tie) {
+        const lx = sx(rangeA)
+        ctx.fillStyle = COLORS.target
+        ctx.beginPath()
+        ctx.moveTo(lx, gy - 14)
+        ctx.lineTo(lx + 5, gy - 22)
+        ctx.lineTo(lx, gy - 22)
+        ctx.closePath()
+        ctx.fill()
+        ctx.strokeStyle = COLORS.target
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(lx, gy)
+        ctx.lineTo(lx, gy - 22)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(lx, gy, 4, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        const tick = (x: number, color: string) => {
+          ctx.strokeStyle = color
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(sx(x), gy)
+          ctx.lineTo(sx(x), gy - 10)
+          ctx.stroke()
+          ctx.fillStyle = color
+          ctx.beginPath()
+          ctx.arc(sx(x), gy, 3.5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        tick(rangeA, COLORS.flat)
+        tick(rangeB, COLORS.high)
+      }
 
       // animate both projectiles
       let t = 0
@@ -177,9 +202,11 @@ export default function ComplementaryPair({ angleDeg = 30, speed = 22 }: Props) 
     }
   }, [])
 
-  const comp = 90 - angle
-  const range = computeKinematics(angle, v, G).range
-  const isDegenerate = Math.round(angle) === 45
+  const secondAngle = independent ? angleB : 90 - angle
+  const rangeA = computeKinematics(angle, v, G).range
+  const rangeB = computeKinematics(secondAngle, v, G).range
+  const tie = Math.abs(rangeA - rangeB) < 0.5
+  const isDegenerate = !independent && Math.round(angle) === 45
 
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -188,19 +215,38 @@ export default function ComplementaryPair({ angleDeg = 30, speed = 22 }: Props) 
       </div>
 
       <div className="border-y border-line bg-surface-2 px-3 py-2 text-center">
-        <p className="font-display text-sm font-semibold text-ink">
-          θ = {Math.round(angle)}°, complement = {Math.round(comp)}°, both land at R = {range.toFixed(1)} m
-        </p>
-        <p className="text-[10px] leading-tight text-ink-soft">
-          {isDegenerate
-            ? 'θ = 45°: the two arcs coincide — same flat & high path'
-            : 'Same speed, same range — orange is flat & fast, gold is high & slow'}
-        </p>
+        {independent ? (
+          <>
+            <p className="font-display text-sm font-semibold text-ink">
+              A = {Math.round(angle)}° → {rangeA.toFixed(1)} m · B = {Math.round(angleB)}° → {rangeB.toFixed(1)} m
+            </p>
+            <p className="text-[10px] leading-tight text-ink-soft">
+              {tie
+                ? 'Same range — these two angles are complementary (they add to 90°)!'
+                : 'Different angles, different ranges — try to find the pair that ties.'}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-display text-sm font-semibold text-ink">
+              θ = {Math.round(angle)}°, complement = {Math.round(secondAngle)}°, both land at R = {rangeA.toFixed(1)} m
+            </p>
+            <p className="text-[10px] leading-tight text-ink-soft">
+              {isDegenerate
+                ? 'θ = 45°: the two arcs coincide — same flat & high path'
+                : 'Same speed, same range — orange is flat & fast, gold is high & slow'}
+            </p>
+          </>
+        )}
       </div>
 
       <div className="space-y-3 p-3">
-        <Slider label="Angle θ" value={angle} min={10} max={80} unit="°" onChange={(n) => { setAngle(n); reset() }} />
-        <Slider label="Launch speed" value={v} min={10} max={30} unit=" m/s" onChange={(n) => { setV(n); reset() }} />
+        <Slider label={independent ? 'Angle A (orange)' : 'Angle θ'} value={angle} min={10} max={80} unit="°" onChange={(n) => { setAngle(n); reset() }} />
+        {independent ? (
+          <Slider label="Angle B (gold)" value={angleB} min={10} max={80} unit="°" onChange={(n) => { setAngleB(n); reset() }} />
+        ) : (
+          <Slider label="Launch speed" value={v} min={10} max={30} unit=" m/s" onChange={(n) => { setV(n); reset() }} />
+        )}
         <div className="flex gap-2">
           <button type="button" onClick={fire} disabled={phase === 'running'} className="btn-primary flex-1 py-2.5">
             {phase === 'done' ? 'Fire again' : 'Fire'}

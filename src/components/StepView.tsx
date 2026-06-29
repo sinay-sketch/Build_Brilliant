@@ -133,7 +133,7 @@ export default function StepView({ step, lesson, masteryScore, saved, onSolved, 
       )
     case 'plot-position':
       return (
-        <PlotPositionView step={step} lesson={lesson} masteryScore={masteryScore} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
+        <PlotPositionView step={step} lesson={lesson} masteryScore={masteryScore} saved={saved} onSolved={onSolved} onContinue={onContinue} continueLabel={continueLabel} />
       )
     case 'stop-fall':
       return (
@@ -212,13 +212,13 @@ function hashId(s: string): number {
  * that instead.
  */
 /** Render the specific game a question authored for itself. */
-function renderGame(g: NonNullable<Step['game']>, quiz = false): React.ReactNode {
+function renderGame(g: NonNullable<Step['game']>, quiz = false, revealed = true): React.ReactNode {
   const c = g.config ?? {}
   switch (g.kind) {
     case 'none':
       return null
     case 'motion-graph':
-      return <MotionGraph velocity={c.velocity} quiz={quiz} />
+      return <MotionGraph velocity={c.velocity} quiz={quiz} revealed={revealed} />
     case 'track-trip':
       return <TrackTrip velocity={c.velocity} />
     case 'avg-velocity-trip':
@@ -228,11 +228,11 @@ function renderGame(g: NonNullable<Step['game']>, quiz = false): React.ReactNode
     case 'round-trip':
       return <RoundTrip speed={c.speed} />
     case 'scenario-line':
-      return <ScenarioLine legs={c.legs} />
+      return <ScenarioLine legs={c.legs} revealed={revealed} />
     case 'line-graph':
       return <LineGraph distance={c.distance} time={c.time} />
     case 'drop-tower':
-      return <DropTower height={c.height} />
+      return <DropTower height={c.height} hideReadout={c.hideReadout} />
     case 'drop-race':
       return <DropRace speed={c.speed} />
     case 'stroboscope':
@@ -246,16 +246,17 @@ function renderGame(g: NonNullable<Step['game']>, quiz = false): React.ReactNode
     case 'range-curve':
       return <RangeAngleCurve angleDeg={c.angleDeg} speed={c.speed} />
     case 'complementary-pair':
-      return <ComplementaryPair angleDeg={c.angleDeg} speed={c.speed} />
+      return <ComplementaryPair angleDeg={c.angleDeg} speed={c.speed} angle2Deg={c.angle2Deg} independent={c.independent} />
   }
 }
 
-function QuestionVisual({ step }: { step: Step }) {
+function QuestionVisual({ step, revealed = true }: { step: Step; revealed?: boolean }) {
   // A question's own authored cannon sim or game always wins (most relevant).
   if ('visual' in step && step.visual) return <SimPlayground config={step.visual} />
-  // Numeric questions hide any value-revealing readouts in their game (quiz mode),
-  // so the game models the method without handing over the answer.
-  if (step.game) return renderGame(step.game, step.type === 'numeric')
+  // Numeric questions hide value-revealing readouts via quiz mode; every graded
+  // game stays un-revealed (revealed=false) until the learner has answered, so
+  // the model never hands over the answer up front.
+  if (step.game) return renderGame(step.game, step.type === 'numeric', revealed)
 
   const seed = hashId(step.id)
   // Factory thunks so only the chosen widget is ever constructed.
@@ -340,7 +341,7 @@ function ChoiceStep({
   return (
     <div className="space-y-4">
       <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
-      <QuestionVisual step={step} />
+      <QuestionVisual step={step} revealed={result !== null} />
       <div className="space-y-2.5">
         {step.choices.map((c) => {
           const isSel = selected === c.id
@@ -454,7 +455,7 @@ function NumericStepView({
   return (
     <div className="space-y-4">
       <p className="font-display text-xl font-medium leading-snug text-ink">{renderSci(step.prompt)}</p>
-      <QuestionVisual step={step} />
+      <QuestionVisual step={step} revealed={result !== null} />
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -855,6 +856,7 @@ function PlotPositionView({
   step,
   lesson,
   masteryScore,
+  saved,
   onSolved,
   onContinue,
   continueLabel,
@@ -862,14 +864,21 @@ function PlotPositionView({
   step: Extract<Step, { type: 'plot-position' }>
   lesson: Lesson
   masteryScore?: number
+  saved?: StepState
   onSolved: Props['onSolved']
   onContinue: () => void
   continueLabel: string
 }) {
-  const live = useRef(0)
-  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(null)
-  const [attempts, setAttempts] = useState(0)
-  const [lastPos, setLastPos] = useState<number | null>(null)
+  // Restore a previously placed answer so a revisited, already-solved question
+  // stays solved (Continue available) without re-dragging.
+  const savedPos = typeof saved?.lastAnswer === 'number' ? saved.lastAnswer : null
+  const savedResult = savedPos != null ? checkPlotPosition(step, savedPos) : null
+  const live = useRef(savedPos ?? 0)
+  const [result, setResult] = useState<{ correct: boolean; message: string } | null>(
+    savedResult?.correct ? savedResult : null,
+  )
+  const [attempts, setAttempts] = useState(saved?.attempts ?? 0)
+  const [lastPos, setLastPos] = useState<number | null>(savedPos)
   const solved = result?.correct ?? false
   const max = step.max ?? Math.max(20, Math.ceil((step.velocity * step.time * 1.4) / 10) * 10)
 

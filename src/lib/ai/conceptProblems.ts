@@ -3,13 +3,16 @@
 // here, so these are always correct without any model call. Projectile concepts
 // are handled by the AI generator + engine verifier in generate.ts.
 
-import type { ConceptId, McqStep, NumericStep, Step } from '../../types/content'
+import type { ConceptId, GameSpec, McqStep, NumericStep, Step } from '../../types/content'
 import type { GenDifficulty } from './types'
 
 const G = 9.8
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10
+}
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n))
 }
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -28,7 +31,7 @@ function numeric(
   return { id: uid(concept), type: 'numeric', concept, phase: 'practice', ...fields }
 }
 
-function mcq(concept: ConceptId, prompt: string, options: Array<{ label: string; correct: boolean; feedback: string }>, explanation: string): McqStep {
+function mcq(concept: ConceptId, prompt: string, options: Array<{ label: string; correct: boolean; feedback: string }>, explanation: string, game?: GameSpec): McqStep {
   const choices = options.map((o, i) => ({ id: `c${i}`, label: o.label }))
   const correct = options.findIndex((o) => o.correct)
   const perChoiceFeedback: Record<string, string> = {}
@@ -45,6 +48,7 @@ function mcq(concept: ConceptId, prompt: string, options: Array<{ label: string;
     correctId: `c${Math.max(0, correct)}`,
     perChoiceFeedback,
     explanation,
+    game,
   }
 }
 
@@ -55,17 +59,22 @@ function gravityAccel(difficulty: GenDifficulty): NumericStep {
   // Half the time, invert (find time from speed).
   if (Math.random() < 0.4) {
     const v = round1(G * t)
+    const tt = round1(v / G)
+    const h = clamp(round1(0.5 * G * tt * tt), 5, 200)
     return numeric('gravity-accel', {
       prompt: `A dropped object reaches a speed of ${v} m/s. How long has it been falling? (t = v / g, g = 9.8)`,
-      answer: round1(v / G),
+      answer: tt,
       unit: 's',
       tolerance: 0.2,
       min: 0,
       max: 20,
       hints: ['Rearrange v = g·t to t = v / g.', `That is ${v} ÷ 9.8.`],
-      explanation: `t = v / g = ${v} / 9.8 ≈ ${round1(v / G)} s.`,
+      explanation: `t = v / g = ${v} / 9.8 ≈ ${tt} s.`,
+      // Drop tower with the answer (time) hidden; the given speed stays visible.
+      game: { kind: 'drop-tower', config: { height: h, hideReadout: 'time' } },
     })
   }
+  const h = clamp(round1(0.5 * G * t * t), 5, 200)
   return numeric('gravity-accel', {
     prompt: `An object is dropped from rest. How fast is it falling after ${t} s? (v = g·t, g = 9.8)`,
     answer: round1(G * t),
@@ -75,6 +84,8 @@ function gravityAccel(difficulty: GenDifficulty): NumericStep {
     max: 200,
     hints: ['Use v = g·t.', `That is 9.8 × ${t}.`],
     explanation: `v = g·t = 9.8 × ${t} = ${round1(G * t)} m/s.`,
+    // Drop tower with the answer (speed) hidden; the given time stays visible.
+    game: { kind: 'drop-tower', config: { height: h, hideReadout: 'speed' } },
   })
 }
 
@@ -90,6 +101,8 @@ function fallDistance(difficulty: GenDifficulty): NumericStep {
     max: 500,
     hints: ['Use d = ½·g·t².', `That is 0.5 × 9.8 × ${t}².`],
     explanation: `d = ½·g·t² = 0.5 × 9.8 × ${t}² = ${d} m.`,
+    // Drop tower with the answer (distance fallen) hidden; the given time stays visible.
+    game: { kind: 'drop-tower', config: { height: clamp(d, 5, 200), hideReadout: 'distance' } },
   })
 }
 
@@ -133,12 +146,14 @@ function avgVelocity(): NumericStep {
     max: 100,
     hints: ['Use v = Δx / Δt.', `That is ${dx} ÷ ${dt}.`],
     explanation: `v = Δx / Δt = ${dx} / ${dt} = ${round1(v)} m/s.`,
+    // Trip model (never shows the computed velocity); illustrative numbers, like the lesson.
+    game: { kind: 'avg-velocity-trip', config: { distance: 90, time: 15 } },
   })
 }
 
 function velocityGraph(): NumericStep {
   const dt = randInt(2, 8)
-  const v = pick([3, 5, 6, 8, 10, 12, 15])
+  const v = pick([3, 5, 6, 8, 10, 12])
   const x1 = randInt(0, 5) * 10
   const x2 = x1 + v * dt
   return numeric('velocity-graph', {
@@ -150,6 +165,8 @@ function velocityGraph(): NumericStep {
     max: 100,
     hints: ['Velocity is the slope: rise ÷ run.', `Rise = ${x2} − ${x1} = ${x2 - x1}, run = ${dt}.`],
     explanation: `v = (${x2} − ${x1}) / ${dt} = ${x2 - x1} / ${dt} = ${round1(v)} m/s.`,
+    // Position-time grapher; numeric → quiz mode auto-hides the velocity readout.
+    game: { kind: 'motion-graph', config: { velocity: v } },
   })
 }
 
@@ -165,6 +182,8 @@ function displacement(): NumericStep {
     max: 20,
     hints: ['Displacement is final position minus start, with direction.', `That is ${a} − ${b}.`],
     explanation: `Net displacement = ${a} m east − ${b} m west = ${a - b} m east. (Distance walked was ${a + b} m.)`,
+    // The exact walk on a number line; readout is reveal-gated until answered.
+    game: { kind: 'scenario-line', config: { legs: [a, -b] } },
   })
 }
 
@@ -179,6 +198,7 @@ function speedVsVelocity(): McqStep {
         { label: '"A car that travelled 25 meters."', correct: false, feedback: 'That is a distance, not a rate.' },
       ],
       'Velocity needs a direction. "25 m/s north" is a velocity; "25 m/s" alone is only speed.',
+      { kind: 'two-runners', config: { v1: 6, v2: -6 } },
     ),
     mcq(
       'speed-vs-velocity',
@@ -189,6 +209,7 @@ function speedVsVelocity(): McqStep {
         { label: 'Different speeds, same velocity', correct: false, feedback: 'Their speeds are equal (both 6 m/s); the directions differ.' },
       ],
       'Speed ignores direction (both 6 m/s); velocity includes it, and opposite directions make the velocities different.',
+      { kind: 'two-runners', config: { v1: 6, v2: -6 } },
     ),
   ])
 }

@@ -31,9 +31,10 @@ export const CONCEPT_META: Record<ConceptId, { label: string; lessonId: string }
 // many problems rather than declaring mastery after one.
 //
 //   correct answers in a row → 0.34, 0.56, 0.71, 0.81 (mastered), 0.88, ...
-//   a wrong answer → score is roughly halved.
+//   a wrong answer → score drops to 60% of its value: a real but recoverable
+//   setback (one slip should sting, not erase several correct answers).
 const GAIN = 0.34
-const MISS_FACTOR = 0.5
+const MISS_FACTOR = 0.6
 
 export const emptyMastery: MasteryRecord = {
   score: 0,

@@ -70,6 +70,10 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [progress, setProgress] = useState<Record<string, LessonProgress>>({})
   const [mastery, setMastery] = useState<Partial<Record<ConceptId, MasteryRecord>>>({})
+  // Freshest known mastery per concept: tracks the Firestore snapshot AND every
+  // write we make synchronously, so back-to-back updates to the same concept can
+  // never fold a result into a stale (pre-render) base.
+  const masteryRef = useRef<Partial<Record<ConceptId, MasteryRecord>>>({})
   const [todayActivity, setTodayActivity] = useState<DailyActivity>(emptyActivity)
   // The app is only "ready" once BOTH the profile and the lesson progress have
   // loaded. Gating on the profile alone caused a race where a lesson could be
@@ -89,6 +93,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       setProgress({})
       setMastery({})
+      masteryRef.current = {}
       setTodayActivity(emptyActivity)
       setProfileLoaded(false)
       setProgressLoaded(false)
@@ -178,6 +183,7 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
           snap.forEach((d) => {
             next[d.id as ConceptId] = d.data() as MasteryRecord
           })
+          masteryRef.current = next
           setMastery(next)
         }),
       )
@@ -255,7 +261,9 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       const batch = writeBatch(db)
 
       if (recordsMastery) {
-        batch.set(r.masteryRef(concept), updateMastery(mastery[concept], correct), { merge: true })
+        const updated = updateMastery(masteryRef.current[concept], correct)
+        masteryRef.current[concept] = updated
+        batch.set(r.masteryRef(concept), updated, { merge: true })
       }
 
       const nextStepStates = {
@@ -305,7 +313,9 @@ export function UserDataProvider({ children }: { children: ReactNode }) {
       const r = refs(user.uid)
       const batch = writeBatch(db)
 
-      batch.set(r.masteryRef(concept), updateMastery(mastery[concept], correct), { merge: true })
+      const updatedMastery = updateMastery(masteryRef.current[concept], correct)
+      masteryRef.current[concept] = updatedMastery
+      batch.set(r.masteryRef(concept), updatedMastery, { merge: true })
 
       if (correct) {
         const activity: DailyActivity = {

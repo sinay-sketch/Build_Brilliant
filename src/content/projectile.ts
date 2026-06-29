@@ -232,7 +232,10 @@ export const projectileLesson: Lesson = {
       type: 'numeric',
       phase: 'practice',
       concept: 'trajectory-shape',
-      game: { kind: 'parabola-tracer', config: { angleDeg: 30, speed: 20 } },
+      // No game: hang time depends only on v_y (given in the prompt). A
+      // parabola-tracer with an angle/speed slider is irrelevant here and would
+      // let the learner change v_y away from the stated 10 m/s.
+      game: { kind: 'none' },
       prompt: 'With v_y = 10 m/s and g = 9.8, how many seconds does the ball stay in the air? (t = 2·v_y / g)',
       answer: 2.04,
       unit: 's',

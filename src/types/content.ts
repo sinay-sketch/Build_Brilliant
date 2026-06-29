@@ -100,6 +100,12 @@ export interface GameSpec {
     /** For 'line-graph': total distance (m) and time (s) to plot to scale. */
     distance?: number
     time?: number
+    /** For 'drop-tower' on a graded question: which readout is the answer, so it is hidden (the others stay as given context). */
+    hideReadout?: 'time' | 'speed' | 'distance'
+    /** For 'complementary-pair' independent mode: the gold ball's own freely-adjustable angle. */
+    angle2Deg?: number
+    /** For 'complementary-pair': let both angles be set independently (and drop the speed slider). */
+    independent?: boolean
   }
 }
 

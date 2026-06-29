@@ -143,6 +143,16 @@ export interface NextProblemResult {
   signature: string
 }
 
+// Every practice step must carry an explicit game so StepView never falls back
+// to its random widget pool (the source of the buggy/mismatched practice games).
+// Concept generators attach a lesson-matched, spoiler-safe game; anything that
+// doesn't (e.g. projectile numerics, whose sims would reveal the answer) gets
+// no game rather than a random one.
+function ensureGame(step: Step): Step {
+  if (!step.game) step.game = { kind: 'none' }
+  return step
+}
+
 /**
  * Produce the next verified practice problem for a concept. Tries the AI up to
  * `maxTries` times (rejecting any spec that fails engine verification or repeats
@@ -161,7 +171,7 @@ export async function nextPracticeProblem(
   // Non-projectile concepts are generated deterministically (always correct).
   if (!PROJECTILE_CONCEPTS.includes(concept) && hasConceptGenerator(concept)) {
     const step = conceptProblem(concept, difficulty)
-    if (step) return { step, source: 'authored', signature: step.id }
+    if (step) return { step: ensureGame(step), source: 'authored', signature: step.id }
   }
 
   for (let attempt = 0; attempt < maxTries; attempt++) {
@@ -174,11 +184,11 @@ export async function nextPracticeProblem(
     if (!spec) break
     const verified = buildVerifiedProblem(spec, concept)
     if (verified && !avoidSet.has(verified.signature)) {
-      return { step: verified.step, source: 'ai', signature: verified.signature }
+      return { step: ensureGame(verified.step), source: 'ai', signature: verified.signature }
     }
   }
 
   const step = authoredProblem(concept, difficulty, avoidSet)
   const sig = step.prompt
-  return { step, source: 'authored', signature: sig }
+  return { step: ensureGame(step), source: 'authored', signature: sig }
 }

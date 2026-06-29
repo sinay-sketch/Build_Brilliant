@@ -4,9 +4,19 @@ import { useUserData } from '../context/UserDataContext'
 import { getLesson, lessonMetas } from '../content/course'
 import { isProblemStep, PHASE_META } from '../types/content'
 import type { Lesson as LessonType, StepPhase } from '../types/content'
+import type { StepState } from '../types/user'
 import StepView from '../components/StepView'
 
 export default function Lesson() {
+  const { lessonId = '' } = useParams()
+  // Remount the runner whenever the lesson id changes, so moving from one
+  // lesson's completion screen into the next fully resets state. Without this,
+  // React reuses the component across /lesson/:lessonId navigations and the
+  // stale `finished` flag makes the next lesson open on its completion page.
+  return <LessonRunner key={lessonId} />
+}
+
+function LessonRunner() {
   const { lessonId = '' } = useParams()
   const navigate = useNavigate()
   const { progress, mastery, startLesson, setCurrentStep, submitProblem, completeLesson, ready } = useUserData()
@@ -17,6 +27,9 @@ export default function Lesson() {
   const [showIntro, setShowIntro] = useState(false)
   const initialized = useRef(false)
   const started = useRef(false)
+  // In-session record of answers given this visit, keyed by step id. Lets a
+  // revisited question restore instantly without waiting on the Firestore write.
+  const answersRef = useRef<Record<string, StepState>>({})
 
   // Begin / resume the lesson once data is ready.
   useEffect(() => {
@@ -69,6 +82,15 @@ export default function Lesson() {
 
   const handleSolved = (correct: boolean, answer: string | number | null, concept?: typeof step.concept) => {
     if (!isProblemStep(step)) return
+    // Record the answer in-session so coming back to a solved question restores
+    // it immediately (no dependency on the Firestore round-trip). `correct` is
+    // sticky: once solved correctly, it stays solved.
+    const prev = answersRef.current[step.id]
+    answersRef.current[step.id] = {
+      attempts: (prev?.attempts ?? 0) + 1,
+      correct: correct || (prev?.correct ?? false),
+      lastAnswer: answer,
+    }
     void submitProblem({ lessonId: lesson.id, stepId: step.id, concept, correct, answer })
   }
 
@@ -91,8 +113,9 @@ export default function Lesson() {
   }
 
   // Saved answer for this step (if any), so a revisited question shows the
-  // learner's previous answer instead of a blank re-do.
-  const savedState = progress[lesson.id]?.stepStates?.[step.id]
+  // learner's previous answer instead of a blank re-do. Prefer the in-session
+  // record (instant) and fall back to persisted progress (across sessions).
+  const savedState = answersRef.current[step.id] ?? progress[lesson.id]?.stepStates?.[step.id]
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-5">

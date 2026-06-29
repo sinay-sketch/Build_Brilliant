@@ -31,7 +31,7 @@ export const lessonMetas: LessonMeta[] = [
     order: 1,
     title: 'Position & Velocity',
     concept: 'Where something is and how fast it moves.',
-    estMinutes: 18,
+    estMinutes: 16,
     prerequisites: [],
     playable: true,
   },
